@@ -249,6 +249,15 @@ body.touch .abar kbd{display:none}
 .pad button.fire.on{background:rgba(255,224,102,.35)}
 body.touch.playing .pad{display:flex}
 body.touch .keys-only{display:none}
+.kgroups{display:grid;align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;width:min(760px,100%)}
+.kgroup{background:rgba(12,20,52,.55);border:1px solid var(--line);border-radius:14px;padding:10px 14px;text-align:start}
+.kgroup>b{display:block;color:#ffd23f;margin-bottom:4px;font-size:15px}
+.krow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0;font-size:14px;border-top:1px solid rgba(234,242,255,.08)}
+.krow:first-of-type{border-top:0}
+.krow .k{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.krow .k small{opacity:.55}
+.cornerK{position:absolute;bottom:-7px;right:-6px;font-size:10px;padding:0 4px;line-height:1.4}
+#gearBtn{position:relative}
 /* keyboard hints (hidden on touch screens) */
 .kh{font-size:11px;padding:0 5px;margin-inline-start:6px;opacity:.8;vertical-align:1px;line-height:1.5}
 .go .kh{background:rgba(7,11,31,.12);color:var(--space);border-color:rgba(7,11,31,.35)}
@@ -307,7 +316,7 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
   <div class="hud" id="hud" hidden>
     <div class="hl">
       <div class="hbtns">
-        <button id="hudGear" type="button" data-ta="settings">⚙<kbd>S</kbd></button>
+        <button id="hudGear" type="button" data-ta="settings">⚙<kbd>O</kbd></button>
         <button id="pauseBtn" type="button" data-ta="pauseA">⏸<kbd>P</kbd></button>
         <button id="homeHudBtn" type="button" data-ta="homeA">⌂<kbd>H</kbd></button>
       </div>
@@ -332,7 +341,7 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
 
   <!-- HOME -->
   <div class="screen home" id="homeScreen">
-    <button class="corner" id="gearBtn" type="button" data-ta="settings">⚙</button>
+    <button class="corner" id="gearBtn" type="button" data-ta="settings">⚙<kbd class="kh cornerK">O</kbd></button>
     <button class="corner pr" id="profChip" type="button" data-ta="profile"><span class="pa" id="homeAv">🚀</span><span class="pn" id="homeNick"></span></button>
     <div class="title-wrap">
       <span class="tag" data-t="tag"></span>
@@ -443,9 +452,11 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
   <!-- HELP -->
   <div class="screen" id="helpScreen" hidden>
     <h2 data-t="help"></h2>
+    <h3 data-t="goalT"></h3>
     <p data-t="helpIntro"></p>
     <p data-t="helpHit"></p>
-    <div class="help keys-only" id="helpKeys"></div>
+    <h3 class="keys-only" data-t="keysT"></h3>
+    <div class="kgroups keys-only" id="helpKeys"></div>
     <h3 data-t="gadgets"></h3>
     <div class="help" id="helpPows"></div>
     <h3 data-t="tabAbils"></h3>
@@ -489,7 +500,7 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
     <h2 data-t="paused"></h2>
     <div class="menu">
       <button class="go" id="resumeBtn" type="button"><span data-t="resume"></span><kbd class="kh">R / Enter</kbd></button>
-      <button class="btn" id="pauseSetBtn" type="button"><span class="ico">⚙</span><span data-t="settings"></span><kbd class="kh">S</kbd></button>
+      <button class="btn" id="pauseSetBtn" type="button"><span class="ico">⚙</span><span data-t="settings"></span><kbd class="kh">O</kbd></button>
       <button class="btn" id="restartBtn" type="button"><span class="ico">↻</span><span data-t="restart"></span><kbd class="kh">N</kbd></button>
       <button class="btn" id="quitBtn" type="button"><span class="ico">⌂</span><span data-t="quit"></span><kbd class="kh">H</kbd></button>
     </div>
@@ -581,9 +592,9 @@ he:{
   trophyCount:'השגת {n} מתוך {m} גביעים. כל גביע נותן 20 מטבעות ויהלום.',
   helpIntro:'מפוצצים את כל האסטרואידים כדי לעבור שלב. אסטרואיד גדול מתפרק לקטנים. בכל שלב חמישי מגיע בוס! וכל שלב קשה יותר מהקודם: יותר אסטרואידים, יותר עב"מים ובוסים חזקים יותר.',
   helpHit:'כשנפגעים מאבדים לב והגאדג\'טים נעלמים, אבל ממשיכים מאותו מקום ולא חוזרים לאמצע.',
-  helpAbils:'לפני כל משחק בוחרים 2 כוחות מתוך אלה שקנית (3 מדרגה 5). במשחק לוחצים 1, 2, 3 או על הכפתורים למטה, ומחכים שיתמלאו שוב.',
+  helpAbils:'לפני כל משחק בוחרים 2 כוחות מתוך אלה שקנית (3 מדרגה 5). במשחק לוחצים 1, 2, 3 (או Q ו-E) או על הכפתורים למטה, ומחכים שיתמלאו שוב.',
   gadgets:'גאדג\'טים', dangers:'סכנות והפתעות',
-  k_turn:'להסתובב', k_thrust:'לטוס קדימה', k_fire:'לירות', k_bomb:'פצצה', k_pause:'עצירה', k_abil:'כוחות מיוחדים', kLeft:'להסתובב שמאלה', kRight:'להסתובב ימינה', fireBtn:'אש!',
+  k_turn:'להסתובב', k_thrust:'לטוס קדימה', k_fire:'לירות', k_bomb:'פצצה', k_pause:'הפסקה', k_abil:'כוחות מיוחדים', kLeft:'להסתובב שמאלה', kRight:'להסתובב ימינה', fireBtn:'אש!',
   coinHelp:'מטבע: קונים איתו בחנות', gemHelp:'יהלום: לדברים הכי שווים',
   d_metal:'אסטרואיד מתכת: צריך 3 פגיעות', d_gold:'אסטרואיד זהב: גאדג\'ט, מטבעות ולפעמים יהלום', d_ufo:'עב"ם: יורה עליך, משלב 2', d_hole:'חור שחור: שואב הכול, משלב 6',
   d_mother:'ספינת האם: בשלבים 5, 15, 25', d_queen:'מלכת הכוורת: בשלבים 10, 20, 30', d_treasure:'ספינת אוצר: תפוס אותה לפני שהיא בורחת!', d_meteor:'גשם מטאורים: מגיע בלי אזהרה',
@@ -600,6 +611,10 @@ he:{
   recLoginIntro:'יש לך כבר משתמש במכשיר אחר? תכתוב את הכינוי והסיסמה שלו.', recPass:'סיסמה', recGo:'כניסה',
   recBad:'הכינוי או הסיסמה לא נכונים', recWait:'רגע, חכה כמה שניות ונסה שוב', recFound:'מצאתי! {name}, דרגה {r}, {c} מטבעות. להיכנס אליו? מה שיש עכשיו במכשיר הזה יוחלף.',
   recIn:'נכנסת למשתמש שלך!', recOff:'סיסמאות עובדות רק כשפותחים את המשחק מהקישור שלו.',
+  goalT:'המטרה', hk_play:'🎮 בזמן משחק', hk_pause:'⏸ בהפסקה', hk_over:'🏁 בסוף משחק', hk_home:'🏠 במסך הבית', hk_any:'🪟 בכל מסך וחלון',
+  k_left:'להסתובב שמאלה', k_right:'להסתובב ימינה', k_fwd:'לטוס קדימה', k_backw:'לטוס אחורה', k_a1:'כוח מיוחד ראשון', k_a2:'כוח מיוחד שני', k_a3:'כוח מיוחד שלישי',
+  k_quit:'יציאה למסך הבית', k_resume2:'להמשיך לשחק', k_restart2:'להתחיל מחדש', k_again:'לשחק שוב', k_lb2:'טבלת שיאים', k_play:'לשחק', k_msgs2:'הודעות ליוצרים',
+  k_install2:'התקנה', k_backScr:'חזרה למסך הקודם', k_ok:'אישור בחלון שנפתח', k_cancel:'סגירת חלון',
   install:'התקנה', instT:'להתקין את המשחק', instIntro:'ככה המשחק יופיע אצלך כמו אפליקציה, עם אייקון משלו, ונפתח בלחיצה אחת:', instOpen:'העתקת הקישור', instCopied:'הקישור הועתק! עכשיו פותחים את Chrome, מדביקים אותו בשורת הכתובת ולוחצים Enter.', instManual:'אפשר להעתיק את הקישור מכאן ולהדביק אותו בשורת הכתובת של Chrome:',
   instAnd:'טלפון אנדרואיד (Chrome)', instAndS:'לוחצים על ⋮ למעלה, ואז "הוספה למסך הבית" ואז "התקנה".',
   instIos:'אייפון או אייפד (Safari)', instIosS:'לוחצים על כפתור השיתוף ⬆️, ואז "הוספה למסך הבית".',
@@ -626,7 +641,7 @@ he:{
   codeT:'קוד אדמין / יוצרים', codeGo:'הפעל', codeBad:'הקוד לא נכון', codeUsed:'כבר השתמשת בקוד הזה', codeOut:'הקוד הזה כבר נגמר', codeOk:'הקוד עבד! קיבלת {x}', codeOff:'צריך לפתוח את המשחק מהקישור שלו כדי להשתמש בקוד', codeErr:'משהו השתבש, נסה שוב',
   nickTaken:'השם הזה כבר תפוס. תבחר שם אחר.', nickOk:'✓ השם שלך נשמר', nickCheck:'בודק אם השם פנוי...',
   bannedT:'נחסמת 🚫', bannedD:'האדמין חסם אותך מהמשחק.', bannedR:'סיבה: {r}', adminMsg:'👑 האדמין עדכן את החשבון שלך',
-  k_settings:'הגדרות', k_home:'מסך הבית', k_restart:'להתחיל מחדש (בהפסקה)', k_resume:'להמשיך / לשחק / לשחק שוב', k_lb:'טבלת שיאים (בסוף משחק)', k_back:'חזרה', keysT:'מקשים',
+  k_settings:'הגדרות', k_home:'מסך הבית', k_restart:'להתחיל מחדש (בהפסקה)', k_resume:'להמשיך / לשחק / לשחק שוב', k_lb:'טבלת שיאים (בסוף משחק)', k_back:'חזרה', keysT:'⌨️ המקשים במחשב',
   pubRank:'דרגה {r} · {name}',
 },
 en:{
@@ -662,7 +677,7 @@ en:{
   trophyCount:'You have {n} of {m} trophies. Each one gives 20 coins and a diamond.',
   helpIntro:'Blast every asteroid to clear the level. Big asteroids break into small ones. Every fifth level has a boss! Each level is harder than the last: more asteroids, more UFOs and tougher bosses.',
   helpHit:'When you get hit you lose a heart and your gadgets, but you keep going from the same spot instead of the middle.',
-  helpAbils:'Before each game pick 2 of the powers you bought (3 from rank 5). In game press 1, 2, 3 or tap the buttons, then wait for them to refill.',
+  helpAbils:'Before each game pick 2 of the powers you bought (3 from rank 5). In game press 1, 2, 3 (or Q and E) or tap the buttons, then wait for them to refill.',
   gadgets:'Gadgets', dangers:'Dangers and surprises',
   k_turn:'Turn', k_thrust:'Thrust', k_fire:'Fire', k_bomb:'Bomb', k_pause:'Pause', k_abil:'Special powers', kLeft:'Turn left', kRight:'Turn right', fireBtn:'FIRE',
   coinHelp:'Coin: spend it in the shop', gemHelp:'Diamond: for the best stuff',
@@ -681,6 +696,10 @@ en:{
   recLoginIntro:'Already have a player on another device? Type its nickname and password.', recPass:'Password', recGo:'Log in',
   recBad:'Wrong nickname or password', recWait:'Wait a few seconds and try again', recFound:'Found it! {name}, rank {r}, {c} coins. Log in to it? What is on this device now will be replaced.',
   recIn:'You are in your player!', recOff:'Passwords work only when the game is opened from its link.',
+  goalT:'The goal', hk_play:'🎮 While playing', hk_pause:'⏸ When paused', hk_over:'🏁 After a game', hk_home:'🏠 On the home screen', hk_any:'🪟 On any screen or window',
+  k_left:'Turn left', k_right:'Turn right', k_fwd:'Fly forward', k_backw:'Fly backward', k_a1:'First power', k_a2:'Second power', k_a3:'Third power',
+  k_quit:'Leave to home', k_resume2:'Keep playing', k_restart2:'Start over', k_again:'Play again', k_lb2:'Leaderboards', k_play:'Play', k_msgs2:'Message the creators',
+  k_install2:'Install', k_backScr:'Back to the last screen', k_ok:'OK in a pop-up window', k_cancel:'Close a window',
   install:'Install', instT:'Install the game', instIntro:'This puts the game on your device like an app, with its own icon, one tap away:', instOpen:'Copy the link', instCopied:'Link copied! Now open Chrome, paste it in the address bar and press Enter.', instManual:'Copy the link from here and paste it in Chrome\'s address bar:',
   instAnd:'Android phone (Chrome)', instAndS:'Tap ⋮ at the top, then "Add to Home screen", then "Install".',
   instIos:'iPhone or iPad (Safari)', instIosS:'Tap the Share button ⬆️, then "Add to Home Screen".',
@@ -707,7 +726,7 @@ en:{
   codeT:'Admin / creator code', codeGo:'Redeem', codeBad:'That code is wrong', codeUsed:'You already used this code', codeOut:'This code has run out', codeOk:'It worked! You got {x}', codeOff:'Open the game from its link to use codes', codeErr:'Something went wrong, try again',
   nickTaken:'That name is taken. Pick another one.', nickOk:'✓ Your name is saved', nickCheck:'Checking the name...',
   bannedT:'You are banned 🚫', bannedD:'The admin banned you from the game.', bannedR:'Reason: {r}', adminMsg:'👑 The admin updated your account',
-  k_settings:'Settings', k_home:'Home', k_restart:'Restart (when paused)', k_resume:'Resume / play / play again', k_lb:'Leaderboards (after a game)', k_back:'Back', keysT:'Keys',
+  k_settings:'Settings', k_home:'Home', k_restart:'Restart (when paused)', k_resume:'Resume / play / play again', k_lb:'Leaderboards (after a game)', k_back:'Back', keysT:'⌨️ Computer keys',
   pubRank:'Rank {r} · {name}',
 }};
 // the website copy (installable app) has no Claude account behind it, so it saves on the device only
@@ -1853,9 +1872,17 @@ function renderTrophies(){
   $('trophyList').innerHTML = TROPHIES.map(t => `<div class="trophy${save.trophies[t.id] ? ' got' : ''}"><span class="cup">🏆</span><span class="tx"><b>${esc(L(t.n))}</b><span>${esc(L(t.d))}</span></span></div>`).join('');
 }
 function renderHelp(){
-  $('helpKeys').innerHTML = [['← → / A D', 'k_turn'], ['↑ / W', 'k_thrust'], [lang === 'en' ? 'Space' : 'רווח', 'k_fire'], ['B', 'k_bomb'], ['1 2 3 / Q E', 'k_abil'], ['R / P / Esc', 'k_pause'],
-    ['S', 'k_settings'], ['H', 'k_home'], ['Enter', 'k_resume'], ['N', 'k_restart'], ['L', 'k_lb'], ['M', 'k_msgs'], ['I', 'k_install'], ['Esc', 'k_back']]
-    .map(([k, l]) => `<div><kbd>${k}</kbd> ${tr(l)}</div>`).join('');
+  const space = lang === 'en' ? 'Space' : 'רווח';
+  const groups = [
+    ['hk_play', [[['←','A'], 'k_left'], [['→','D'], 'k_right'], [['↑','W'], 'k_fwd'], [['↓','S'], 'k_backw'], [[space], 'k_fire'], [['B'], 'k_bomb'],
+                 [['1','Q'], 'k_a1'], [['2','E'], 'k_a2'], [['3'], 'k_a3'], [['R','P','Esc'], 'k_pause'], [['O'], 'k_settings'], [['H'], 'k_quit']]],
+    ['hk_pause', [[['R','P','Enter','Esc'], 'k_resume2'], [['N'], 'k_restart2'], [['O'], 'k_settings'], [['H'], 'k_quit']]],
+    ['hk_over', [[['Enter'], 'k_again'], [['L'], 'k_lb2'], [['H','Esc'], 'k_quit']]],
+    ['hk_home', [[['Enter'], 'k_play'], [['O'], 'k_settings'], [['M'], 'k_msgs2'], [['I'], 'k_install2']]],
+    ['hk_any', [[['Esc'], 'k_backScr'], [['Enter'], 'k_ok'], [['Esc'], 'k_cancel']]],
+  ];
+  $('helpKeys').innerHTML = groups.map(([t, rows]) => `<div class="kgroup"><b>${tr(t)}</b>${rows.map(([ks, l]) =>
+    `<div class="krow"><span>${tr(l)}</span><span class="k">${ks.map(k => `<kbd>${k}</kbd>`).join('<small>/</small>')}</span></div>`).join('')}</div>`).join('');
   $('helpPows').innerHTML = POW_KEYS.map(k => `<div><i style="color:${POW[k].c}">${POW[k].icon}</i>${esc(L(POW[k].n))}</div>`).join('') +
     `<div><i style="color:var(--coin);border:0">${CI}</i>${tr('coinHelp')}</div><div><i style="color:var(--gem);border:0">${GI}</i>${tr('gemHelp')}</div>`;
   $('helpAbils').innerHTML = ABILS.map(a => `<div><i style="color:${a.c}">${a.icon}</i>${esc(L(a.n))}: ${esc(L(a.d))}</div>`).join('');
@@ -1905,8 +1932,8 @@ $('resetBtn').onclick = () => {
 };
 
 // ---------- input ----------
-const keys = {left:false,right:false,up:false,fire:false};
-const map = {ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',Space:'fire',KeyA:'left',KeyD:'right',KeyW:'up'};
+const keys = {left:false,right:false,up:false,down:false,fire:false};
+const map = {ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',Space:'fire',KeyA:'left',KeyD:'right',KeyW:'up',KeyS:'down'};
 const abilKeys = {Digit1:0, Digit2:1, Digit3:2, Numpad1:0, Numpad2:1, Numpad3:2, KeyQ:0, KeyE:1};
 addEventListener('keydown', e => {
   const k = e.code, enter = k === 'Enter' || k === 'NumpadEnter';
@@ -1927,7 +1954,7 @@ addEventListener('keydown', e => {
     if (k === 'KeyB') useBomb();
     if (k in abilKeys) useAbility(abilKeys[k]);
     if (k === 'KeyR' || k === 'KeyP' || k === 'Escape') openPause();
-    else if (k === 'KeyS') $('hudGear').click();
+    else if (k === 'KeyO') $('hudGear').click();
     else if (k === 'KeyH') $('homeHudBtn').click();
     return;
   }
@@ -1938,10 +1965,10 @@ addEventListener('keydown', e => {
   switch (curScreen){
     case 'pause':
       if (enter || k === 'KeyP' || k === 'KeyR' || k === 'Escape') go('resumeBtn');
-      else if (k === 'KeyS') go('pauseSetBtn'); else if (k === 'KeyN') go('restartBtn'); else if (k === 'KeyH') go('quitBtn');
+      else if (k === 'KeyO' || k === 'KeyS') go('pauseSetBtn'); else if (k === 'KeyN') go('restartBtn'); else if (k === 'KeyH') go('quitBtn');
       break;
     case 'over': if (enter) go('againBtn'); else if (k === 'KeyL') go('overLbBtn'); else if (k === 'KeyH' || k === 'Escape') go('overHomeBtn'); break;
-    case 'home': if (enter) go('playBtn'); else if (k === 'KeyS') go('gearBtn'); else if (k === 'KeyM') go('msgBtn'); else if (k === 'KeyI') go('installBtn'); break;
+    case 'home': if (enter) go('playBtn'); else if (k === 'KeyO' || k === 'KeyS') go('gearBtn'); else if (k === 'KeyM') go('msgBtn'); else if (k === 'KeyI') go('installBtn'); break;
     case 'setup': if (enter) go('startBtn'); else if (k === 'Escape') go('setupBack'); break;
     case 'settings': if (k === 'Escape') go('setBack'); break;
     case 'banned': break;
@@ -2298,6 +2325,12 @@ function update(dt){
     ship.vx += Math.cos(ship.a)*S.acc*dt; ship.vy += Math.sin(ship.a)*S.acc*dt;
     for (let i=0;i<2;i++) parts.push({x:ship.x-Math.cos(ship.a)*14, y:ship.y-Math.sin(ship.a)*14,
       vx:-Math.cos(ship.a)*140+rnd(-40,40), vy:-Math.sin(ship.a)*140+rnd(-40,40), life:.35, color: Math.random()<.5?'#ff9f43':'#ffe066', size:3});
+  }
+  // backwards: a bit weaker than forward, with small puffs from the nose
+  if (keys.down){
+    ship.vx -= Math.cos(ship.a)*S.acc*.65*dt; ship.vy -= Math.sin(ship.a)*S.acc*.65*dt;
+    if (Math.random() < .7) parts.push({x:ship.x+Math.cos(ship.a)*14, y:ship.y+Math.sin(ship.a)*14,
+      vx:Math.cos(ship.a)*110+rnd(-30,30), vy:Math.sin(ship.a)*110+rnd(-30,30), life:.25, color:'#bff4ff', size:2.5});
   }
   // black hole pull
   if (hole){
