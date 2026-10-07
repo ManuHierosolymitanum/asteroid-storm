@@ -376,6 +376,43 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
   .set{padding:8px 10px}
 }
 @media (prefers-reduced-motion:reduce){.home h1{animation:none}.go{box-shadow:none}.toast,.modal .box{animation:none}}
+
+/* special modes on the home screen */
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:min(520px,100%)}
+.btn.mode{flex-direction:column;gap:2px;padding:8px 6px;line-height:1.15;min-width:0}
+.btn.mode b{font-family:var(--font-display);font-weight:400;font-size:clamp(14px,3.4vw,18px)}
+.btn.mode small{font-size:11px;opacity:.8;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.btn.mode.bonus{border-color:#a8862a}
+.btn.mode.bonus.ready{border-color:var(--laser);box-shadow:0 0 16px rgba(255,224,102,.45);animation:glowP 1.6s ease-in-out infinite}
+.btn.mode.bonus.ready small{color:var(--laser);opacity:1}
+.btn.mode.run{border-color:#a03d97}
+.btn.mode.run b{color:#ff8de0}
+.btn.mode.duel{border-color:#a3334a}
+.btn.mode.duel b{color:#ff8c8c}
+@keyframes glowP{50%{box-shadow:0 0 26px rgba(255,224,102,.75)}}
+.hud .modetag,.hud .duelbar{font-size:clamp(13px,2.6vw,16px);margin-top:2px;white-space:nowrap}
+.hud .modetag{color:var(--laser)}
+.hud .duelbar{color:#ff8c8c}
+body:not(.m-duel) .hud .duelbar{display:none}
+body.m-run .hud .bst,body.m-bonus .hud .bst,body.m-duel .hud .bst,body.m-run .hud .lvl,body.m-run .hud .bombs,body.m-run .hud .combo,body.m-run .pad .bomb,body.m-run .pad .fire,body.m-bonus .hud .lvl{display:none}
+/* 1v1 search radar */
+.radar{position:relative;width:120px;height:120px;border-radius:50%;border:2px solid #ff8c8c;display:grid;place-items:center;overflow:hidden;
+  background:radial-gradient(circle,rgba(255,140,140,.12) 0 30%,transparent 31% 60%,rgba(255,140,140,.12) 61% 62%,transparent 63%)}
+.radar i{position:absolute;inset:0;background:conic-gradient(from 0deg,rgba(255,140,140,.55),transparent 25%);animation:spin 1.6s linear infinite}
+.radar span{position:relative;font-size:46px}
+#duelScreen.found .radar{border-color:var(--laser);box-shadow:0 0 30px rgba(255,224,102,.5)}
+#duelScreen.found .radar i{display:none}
+#duelStats .roll{display:flex;flex-direction:column;gap:6px;align-items:center;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:10px 16px}
+#duelStats .roll b{font-family:var(--font-display);font-weight:400;font-size:22px}
+#duelStats .roll small{opacity:.75}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* "turn your phone sideways" tip */
+.rotate{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);
+  background:rgba(10,20,40,.95);border:2px solid var(--laser);border-radius:14px;padding:8px 10px 8px 14px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.rotate .ph{font-size:24px;display:inline-block;animation:turn 2.2s ease-in-out infinite}
+.rotate button{background:transparent;border:0;color:var(--ink);font-size:18px;padding:4px 6px;cursor:pointer}
+@keyframes turn{0%,30%{transform:rotate(0)}55%,85%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+@media (prefers-reduced-motion:reduce){.rotate .ph,.radar i,.btn.mode.bonus.ready{animation:none}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -404,6 +441,8 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
       <div class="lvl"><span data-t="level"></span> <b id="level">1</b></div>
       <div class="combo" id="combo"></div>
       <div class="testtag" id="testTag" data-t="testTag" hidden></div>
+      <div class="modetag" id="modeTag" hidden></div>
+      <div class="duelbar" id="duelBar" hidden></div>
     </div>
     <div class="hr">
       <div class="sc" id="score">0</div>
@@ -428,6 +467,11 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
     </div>
     <div class="menu">
       <button class="go" id="playBtn" type="button"><span data-t="play"></span><kbd class="kh">Enter</kbd></button>
+    </div>
+    <div class="modes">
+      <button class="btn mode bonus" id="bonusBtn" type="button"><span class="ico">🎁</span><b data-t="bonusB"></b><small id="bonusInfo"></small></button>
+      <button class="btn mode run" id="runBtn" type="button"><span class="ico">🌀</span><b data-t="runB"></b><small id="runInfo"></small></button>
+      <button class="btn mode duel" id="duelBtn" type="button"><span class="ico">⚔️</span><b data-t="duelB"></b><small id="duelInfo"></small></button>
     </div>
     <div class="grid2">
       <button class="btn" id="shopBtn" type="button"><span class="ico">🛠</span><span data-t="shop"></span></button>
@@ -562,6 +606,16 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
     <button class="btn small" data-home type="button"><span data-t="backHome"></span><kbd class="kh">Esc</kbd></button>
   </div>
 
+  <!-- 1v1 SEARCH -->
+  <div class="screen" id="duelScreen" hidden>
+    <h2 data-t="duelT"></h2>
+    <div class="radar"><i></i><span id="duelAv">🚀</span></div>
+    <div class="big" id="duelMsg"></div>
+    <p id="duelSub"></p>
+    <div id="duelStats"></div>
+    <div class="menu"><button class="btn" id="duelCancel" type="button"><span class="ico">✕</span><span data-t="duelCancel"></span><kbd class="kh">Esc</kbd></button></div>
+  </div>
+
   <!-- BANNED -->
   <div class="screen" id="bannedScreen" hidden>
     <h2 data-t="bannedT"></h2>
@@ -583,7 +637,7 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
 
   <!-- GAME OVER -->
   <div class="screen" id="overScreen" hidden>
-    <h2 style="font-size:clamp(36px,9vw,70px);color:var(--ship)" data-t="over"></h2>
+    <h2 style="font-size:clamp(36px,9vw,70px);color:var(--ship)" id="overTitle" data-t="over"></h2>
     <div class="big" id="finalScore"></div>
     <p id="finalInfo"></p>
     <div class="badges"><span class="badge coin" id="finalCoins"></span><span class="badge gem" id="finalGems"></span><span class="badge best" id="finalBest"></span></div>
@@ -609,6 +663,7 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
     </div>
   </div>
 
+  <div class="rotate" id="rotateTip" hidden><span class="ph">📱</span><span data-t="rotateT"></span><button type="button" id="rotateX" data-ta="close">✕</button></div>
   <div class="toasts" id="toasts"></div>
   <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <div class="box"><h3 id="mTitle"></h3><div id="mBody"></div><div class="mb" id="mBtns"></div></div>
@@ -666,7 +721,7 @@ he:{
   trophyCount:'השגת {n} מתוך {m} גביעים. כל גביע נותן 20 מטבעות ויהלום.',
   helpIntro:'מפוצצים את כל האסטרואידים כדי לעבור שלב. אסטרואיד גדול מתפרק לקטנים. בכל שלב חמישי מגיע בוס! וכל שלב קשה יותר מהקודם: יותר אסטרואידים, יותר עב"מים ובוסים חזקים יותר.',
   helpHit:'כשנפגעים מאבדים לב והגאדג\'טים נעלמים, אבל ממשיכים מאותו מקום ולא חוזרים לאמצע.',
-  helpAbils:'לפני כל משחק בוחרים 2 כוחות מתוך אלה שקנית (3 מדרגה 5). במשחק לוחצים 1, 2, 3 (או Q ו-E) או על הכפתורים למטה, ומחכים שיתמלאו שוב.',
+  helpAbils:'לפני כל משחק בוחרים כוח אחד מתוך אלה שקנית. מדרגה 3 אפשר 2 כוחות, ורק אלופים מדרגה 10 מקבלים 3. במשחק לוחצים 1, 2, 3 (או Q ו-E) או על הכפתורים למטה, ומחכים שיתמלאו שוב.',
   gadgets:'גאדג\'טים', dangers:'סכנות והפתעות',
   k_turn:'להסתובב', k_thrust:'לטוס קדימה', k_fire:'לירות', k_bomb:'פצצה', k_pause:'הפסקה', k_abil:'כוחות מיוחדים', kLeft:'להסתובב שמאלה', kRight:'להסתובב ימינה', fireBtn:'אש!',
   coinHelp:'מטבע: קונים איתו בחנות', gemHelp:'יהלום: לדברים הכי שווים',
@@ -716,6 +771,24 @@ he:{
   nickTaken:'השם הזה כבר תפוס. תבחר שם אחר.', nickOk:'✓ השם שלך נשמר', nickCheck:'בודק אם השם פנוי...',
   bannedT:'נחסמת 🚫', bannedD:'האדמין חסם אותך מהמשחק.', bannedR:'סיבה: {r}', adminMsg:'👑 האדמין עדכן את החשבון שלך',
   k_settings:'הגדרות', k_home:'מסך הבית', k_restart:'להתחיל מחדש (בהפסקה)', k_resume:'להמשיך / לשחק / לשחק שוב', k_lb:'טבלת שיאים (בסוף משחק)', k_back:'חזרה', keysT:'⌨️ המקשים במחשב',
+  slot2:'מקום לכוח שני', chooseAbil1:'בחר כוח מיוחד אחד ({k}/1)', slotMore:' · עוד מקום בדרגה {r}',
+  pickFull:'אפשר לקחת רק {n} כוחות', pickFullS:'תוריד כוח אחד (לחיצה עליו) ואז תבחר אחר', ninjaDash:'לנינג׳ה תמיד יש דאש',
+  rotateT:'סובב את הטלפון על הצד, ככה הכי כיף לשחק!', close:'סגור',
+  bonusB:'בונוס יומי', bonusReady:'מוכן! ⭐', bonusIn:'עוד {t}', bonusQ:'🎁 שלב בונוס יומי',
+  bonusD:'40 שניות של אסטרואידי זהב ותיבות אוצר! תפוצץ כמה שיותר כדי לאסוף מטבעות ויהלומים. אם נפגעים מאבדים 3 שניות, אבל לא נפסלים. אפשר פעם אחת ביום.',
+  bonusGo:'יאללה!', bonusWait:'כבר שיחקת בבונוס היום. הבונוס הבא בעוד {t}', bonusBanner:'שלב בונוס!', bonusSub:'תפוצץ את הזהב!',
+  bonusHit:'−3 שניות', bonusOver:'הבונוס חוזר בעוד 24 שעות', bonusEnd:'הבונוס נגמר!',
+  runB:'מרוץ ניאון', runQ:'🌀 מרוץ ניאון', runD:'משחק אחר לגמרי! טסים קדימה במנהרת ניאון, מתחמקים מקירות, לייזרים ומוקשים ואוספים כדורי אנרגיה. כל 600 מטר יש אזור חדש, מהיר וקשה יותר. כמה רחוק תגיע?',
+  runKeys:'חצים ימינה ושמאלה כדי לזוז · למעלה לטורבו · למטה כדי להאט', runTouch:'תגרור את האצבע ימינה ושמאלה · ▲ לטורבו', runGo:'לטוס!',
+  runSub:'תתחמק ותאסוף אנרגיה!', runZone:'אזור {n}', runFaster:'יותר מהר!', runNear:'כמעט! +{n}',
+  run_ghost:'👻 רוח רפאים!', run_magnet:'🧲 מגנט!', run_turbo:'🚀 טורבו!', run_shield:'🛡 מגן!',
+  runInfo:'טסת {m} מטר והגעת לאזור {s}', runNewBest:'שיא מרחק חדש! 🎉', runYourBest:'השיא שלך: {m} מטר', runBestS:'שיא: {m} מ׳', meters:'מ׳',
+  duelB:'1 על 1', duelT:'⚔️ קרב 1 על 1', duelD:'מחפש שחקן מכל העולם שגם לחץ על 1 על 1...', duelSearch:'מחפש יריב...',
+  duelWaiting:'עוד {n} שחקנים מחפשים עכשיו', duelCancel:'ביטול', duelFound:'נמצא יריב: {nick}!', duelRoll:'המשחק הגריל לשניכם את אותה חללית ואותם כוחות:',
+  duelOff:'כדי לשחק 1 על 1 צריך אינטרנט ולהיות מחוברים. תנסה שוב עוד מעט.', duelWorld:'נגד שחקנים מכל העולם',
+  duelWin:'ניצחת את {nick}! 🏆', duelLose:'{nick} ניצח הפעם. בפעם הבאה!', duelLeft:'{nick} עזב את הקרב, אז ניצחת!',
+  duelWinT:'ניצחת! 🏆', duelLoseT:'הפסדת...', duelStat:'ניצחונות: {w} · הפסדים: {l}', duelWL:'{w} ניצחונות · {l} הפסדים',
+  duelQuitQ:'לצאת מהקרב?', duelQuitS:'אם יוצאים, היריב מנצח.', duelAgain:'עוד קרב', duelWaitT:'נפסלת! מחכים לתוצאה...',
   pubRank:'דרגה {r} · {name}',
 },
 en:{
@@ -751,7 +824,7 @@ en:{
   trophyCount:'You have {n} of {m} trophies. Each one gives 20 coins and a diamond.',
   helpIntro:'Blast every asteroid to clear the level. Big asteroids break into small ones. Every fifth level has a boss! Each level is harder than the last: more asteroids, more UFOs and tougher bosses.',
   helpHit:'When you get hit you lose a heart and your gadgets, but you keep going from the same spot instead of the middle.',
-  helpAbils:'Before each game pick 2 of the powers you bought (3 from rank 5). In game press 1, 2, 3 (or Q and E) or tap the buttons, then wait for them to refill.',
+  helpAbils:'Before each game pick 1 of the powers you bought. From rank 3 you get 2, and only champions at rank 10 get 3. In game press 1, 2, 3 (or Q and E) or tap the buttons, then wait for them to refill.',
   gadgets:'Gadgets', dangers:'Dangers and surprises',
   k_turn:'Turn', k_thrust:'Thrust', k_fire:'Fire', k_bomb:'Bomb', k_pause:'Pause', k_abil:'Special powers', kLeft:'Turn left', kRight:'Turn right', fireBtn:'FIRE',
   coinHelp:'Coin: spend it in the shop', gemHelp:'Diamond: for the best stuff',
@@ -801,6 +874,24 @@ en:{
   nickTaken:'That name is taken. Pick another one.', nickOk:'✓ Your name is saved', nickCheck:'Checking the name...',
   bannedT:'You are banned 🚫', bannedD:'The admin banned you from the game.', bannedR:'Reason: {r}', adminMsg:'👑 The admin updated your account',
   k_settings:'Settings', k_home:'Home', k_restart:'Restart (when paused)', k_resume:'Resume / play / play again', k_lb:'Leaderboards (after a game)', k_back:'Back', keysT:'⌨️ Computer keys',
+  slot2:'Second power slot', chooseAbil1:'Pick 1 special power ({k}/1)', slotMore:' · another slot at rank {r}',
+  pickFull:'You can only take {n} powers', pickFullS:'Tap a power to remove it, then pick another', ninjaDash:'The Ninja always has Dash',
+  rotateT:'Turn your phone sideways, it\'s more fun that way!', close:'Close',
+  bonusB:'Daily bonus', bonusReady:'Ready! ⭐', bonusIn:'in {t}', bonusQ:'🎁 Daily bonus level',
+  bonusD:'40 seconds of gold asteroids and treasure ships! Blast as many as you can for coins and diamonds. Getting hit costs 3 seconds, but you are never out. Once a day.',
+  bonusGo:'Let\'s go!', bonusWait:'You already played today\'s bonus. Next bonus in {t}', bonusBanner:'Bonus level!', bonusSub:'Blast the gold!',
+  bonusHit:'−3 seconds', bonusOver:'The bonus is back in 24 hours', bonusEnd:'Bonus over!',
+  runB:'Neon Rush', runQ:'🌀 Neon Rush', runD:'A totally different game! Fly forward through a neon tunnel, dodge walls, lasers and mines and grab energy orbs. Every 600 m is a new zone, faster and harder. How far can you go?',
+  runKeys:'Left and right arrows to move · Up for turbo · Down to slow down', runTouch:'Drag your finger left and right · ▲ for turbo', runGo:'Fly!',
+  runSub:'Dodge and grab energy!', runZone:'Zone {n}', runFaster:'Faster!', runNear:'Close call! +{n}',
+  run_ghost:'👻 Ghost!', run_magnet:'🧲 Magnet!', run_turbo:'🚀 Turbo!', run_shield:'🛡 Shield!',
+  runInfo:'You flew {m} m and reached zone {s}', runNewBest:'New distance record! 🎉', runYourBest:'Your best: {m} m', runBestS:'Best: {m} m', meters:'m',
+  duelB:'1v1', duelT:'⚔️ 1v1 battle', duelD:'Looking for a player anywhere in the world who also pressed 1v1...', duelSearch:'Searching...',
+  duelWaiting:'{n} other players are searching now', duelCancel:'Cancel', duelFound:'Opponent found: {nick}!', duelRoll:'You both got the same random ship and powers:',
+  duelOff:'1v1 needs internet and being signed in. Try again in a bit.', duelWorld:'Against players worldwide',
+  duelWin:'You beat {nick}! 🏆', duelLose:'{nick} won this time. Next time!', duelLeft:'{nick} left the battle, so you win!',
+  duelWinT:'You win! 🏆', duelLoseT:'You lost...', duelStat:'Wins: {w} · Losses: {l}', duelWL:'{w} wins · {l} losses',
+  duelQuitQ:'Leave the battle?', duelQuitS:'If you leave, your opponent wins.', duelAgain:'Another battle', duelWaitT:'You\'re out! Waiting for the result...',
   pubRank:'Rank {r} · {name}',
 }};
 // the website copy (installable app) saves online through Firebase instead of Claude;
@@ -842,7 +933,7 @@ const ABILS = [
   {id:'ult',     n:['מגה־לייזר','Mega laser'], d:['קרן ענקית שהורסת הכול','A huge beam that wrecks everything'], icon:'☄', c:'#ff4fd8', cd:28, rank:11, cost:{g:80}},
 ];
 const RANKS = [['טירון','Rookie'],['צוער','Cadet'],['טייס','Pilot'],['טייס בכיר','Senior Pilot'],['סגן','Lieutenant'],['סרן','Captain'],['רב־סרן','Major'],['סגן־אלוף','Lt. Colonel'],['אלוף משנה','Colonel'],['תת־אלוף','Brigadier'],['אלוף','General'],['אלוף החלל','Space General'],['מפקד הגלקסיה','Galaxy Commander'],['שומר הכוכבים','Star Guardian'],['אגדת היקום','Universe Legend']];
-const SLOT3_RANK = 5;
+const SLOT2_RANK = 3, SLOT3_RANK = 10;
 const needXp = r => 50 * (r - 1) * r;
 const rankOf = xp => { let r = 1; while (xp >= needXp(r + 1)) r++; return r; };
 const rankName = r => L(RANKS[Math.min(r, RANKS.length) - 1]) + (r > RANKS.length ? ` ${r - RANKS.length + 1}` : '');
@@ -850,6 +941,7 @@ function unlocksAt(r){
   const u = [];
   SHIPS.forEach(s => { if (s.rank === r && s.cost) u.push({kind:tr('kShip'), name:L(s.n), c:s.color}); });
   ABILS.forEach(a => { if (a.rank === r && a.cost && a.rank > 1) u.push({kind:tr('kAbil'), name:L(a.n), c:a.c}); });
+  if (r === SLOT2_RANK) u.push({kind:tr('kUp'), name:tr('slot2'), c:'#ffe066'});
   if (r === SLOT3_RANK) u.push({kind:tr('kUp'), name:tr('slot3'), c:'#ffe066'});
   return u;
 }
@@ -911,6 +1003,9 @@ const TROPHIES = [
   {id:'treasure',n:['שודד חלל','Space pirate'], d:['הפלת ספינת אוצר','Caught a treasure ship']},
   {id:'queen',   n:['מלך הכוורת','Hive king'], d:['ניצחת את מלכת הכוורת','Beat the Hive Queen']},
   {id:'phoenix', n:['קם מהאפר','From the ashes'], d:['הפיניקס קם לתחייה','The phoenix came back']},
+  {id:'bonus1',  n:['צייד הבונוס','Bonus hunter'], d:['שיחקת שלב בונוס יומי','Played a daily bonus level']},
+  {id:'run1k',   n:['מהיר כמו ניאון','Neon speed'], d:['טסת 1,000 מטר במרוץ ניאון','Flew 1,000 m in Neon Rush']},
+  {id:'duelWin', n:['אלוף הקרבות','Battle champ'], d:['ניצחת בקרב 1 על 1','Won a 1v1 battle']},
 ];
 const COUNTRIES = [['IL','🇮🇱','ישראל','Israel'],['US','🇺🇸','ארה"ב','USA'],['GB','🇬🇧','בריטניה','UK'],['FR','🇫🇷','צרפת','France'],['DE','🇩🇪','גרמניה','Germany'],['ES','🇪🇸','ספרד','Spain'],['IT','🇮🇹','איטליה','Italy'],['NL','🇳🇱','הולנד','Netherlands'],['RU','🇷🇺','רוסיה','Russia'],['UA','🇺🇦','אוקראינה','Ukraine'],['BR','🇧🇷','ברזיל','Brazil'],['AR','🇦🇷','ארגנטינה','Argentina'],['CA','🇨🇦','קנדה','Canada'],['AU','🇦🇺','אוסטרליה','Australia'],['IN','🇮🇳','הודו','India'],['JP','🇯🇵','יפן','Japan'],['KR','🇰🇷','קוריאה','Korea'],['CN','🇨🇳','סין','China'],['TR','🇹🇷','טורקיה','Turkey'],['ZZ','🌍','אחר','Other']];
 const flagOf = c => (COUNTRIES.find(x => x[0] === c) || COUNTRIES[COUNTRIES.length - 1])[1];
@@ -929,13 +1024,14 @@ const GAME_URL = WEB_BUILD ? location.origin + location.pathname : 'https://clau
 // ---------- save ----------
 const DEF_SET = {sound:true, vol:.8, autofire:false, shake:true, flash:true, nums:true, touch:'auto', size:'m'};
 const DEF_STATS = {rocks:0, bosses:0, pows:0, games:0, maxLevel:0, time:0, maxCombo:0};
-const fresh = () => ({best:0, coins:0, gems:5, xp:0, owned:[0,1,2], abils:['dash','barrier'], skins:[], skin:'', ship:0, diff:1, loadout:['dash','barrier'], ups:{}, trophies:{}, stats:{...DEF_STATS}, v:5});
+const fresh = () => ({best:0, coins:0, gems:5, xp:0, owned:[0,1,2], abils:['dash','barrier'], skins:[], skin:'', ship:0, diff:1, loadout:['dash','barrier'], ups:{}, trophies:{}, stats:{...DEF_STATS}, runBest:0, bonusAt:0, duel:{w:0, l:0}, v:5});
 const save = Object.assign(fresh(), {nick:'', country:'IL', avatar:'🚀', lang:'he', settings:{...DEF_SET}, redeemed:[], modsDone:[]});
 const num = (v, d=0) => Number.isFinite(+v) ? Math.max(0, +v) : d;
 function loadInto(o){
   if (!o || typeof o !== 'object') return;
   const old = !o.v;
-  for (const k of ['best','coins','xp','ship','diff']) if (k in o) save[k] = num(o[k]);
+  for (const k of ['best','coins','xp','ship','diff','runBest','bonusAt']) if (k in o) save[k] = num(o[k]);
+  if (o.duel && typeof o.duel === 'object') save.duel = {w:num(o.duel.w), l:num(o.duel.l)};
   if ('gems' in o) save.gems = num(o.gems, 5);
   if (Array.isArray(o.owned)) save.owned = o.owned.filter(i => SHIPS[i]);
   if (Array.isArray(o.abils)) save.abils = o.abils.filter(id => ABILS.some(a => a.id === id));
@@ -967,18 +1063,24 @@ try { loadInto(JSON.parse(localStorage.getItem('astro-save') || 'null')); } catc
 try { const oldBest = +localStorage.getItem('astro-best'); if (oldBest > save.best) save.best = oldBest; } catch(e){}
 if (!save.nick) save.nick = (save.lang === 'en' ? 'Pilot ' : 'טייס ') + Math.floor(rnd(100, 1000));
 let pushT = 0, testGame = false, testSnap = null;
+let gmode = 'classic', lastMode = 'classic'; // classic / bonus (daily) / run (neon rush) / duel (1v1)
 const debug = {god:false, nocd:false};
 function persist(){
   if (testGame) return; // test games never touch the real save
   try { localStorage.setItem('astro-save', JSON.stringify(save)); } catch(e){}
   if (db){ clearTimeout(pushT); pushT = setTimeout(pushCloud, 2500); }
 }
-const up = id => save.ups[id] || 0;
+const up = id => gmode === 'duel' ? 0 : (save.ups[id] || 0); // a 1v1 is fair: no upgrades
 const myRank = () => rankOf(save.xp);
-const slots = () => myRank() >= SLOT3_RANK ? 3 : 2;
+const slots = () => myRank() >= SLOT3_RANK ? 3 : myRank() >= SLOT2_RANK ? 2 : 1;
 const ownsShip = i => save.owned.includes(i);
 const ownsAbil = id => save.abils.includes(id);
-function fixLoadout(){ save.loadout = save.loadout.filter(ownsAbil).filter((v,i,a) => a.indexOf(v) === i).slice(0, slots()); if (!ownsShip(save.ship)) save.ship = 0; }
+function fixLoadout(){
+  if (!ownsShip(save.ship)) save.ship = 0;
+  let l = save.loadout.filter(ownsAbil).filter((v,i,a) => a.indexOf(v) === i);
+  if ((SHIPS[save.ship] || {}).ninja && !l.includes('dash')) l.unshift('dash');
+  save.loadout = l.slice(0, slots());
+}
 fixLoadout();
 
 // ---------- cloud: shared leaderboard, personal save, admin ----------
@@ -1028,7 +1130,7 @@ function pushCloud(){
       await db.doc('data/users/' + uid + '/save').set({json, xp:save.xp, t:now});
       if (save.rec) await pushRec(json, now);
       await db.doc('profiles/' + uid).set({nick:save.nick, avatar:save.avatar, country:save.country, coins:save.coins, gems:save.gems, xp:save.xp, best:save.best,
-        games:st.games, level:st.maxLevel, bosses:st.bosses, rocks:st.rocks, owned:save.owned, abils:save.abils, skins:save.skins, trophies:Object.keys(save.trophies).length, lastSeen:now});
+        games:st.games, level:st.maxLevel, bosses:st.bosses, rocks:st.rocks, runBest:save.runBest, duelW:save.duel.w, duelL:save.duel.l, owned:save.owned, abils:save.abils, skins:save.skins, trophies:Object.keys(save.trophies).length, lastSeen:now});
       if (banned === null) await db.doc('scores/' + uid).set({nick:save.nick, nickKey:nickKey(save.nick), country:save.country, avatar:save.avatar,
         score:save.best, level:st.maxLevel, bosses:st.bosses, rocks:st.rocks, xp:save.xp, updated:now});
       lastPush = key;
@@ -1184,7 +1286,7 @@ function lockHtml(rank, cost){
 }
 
 // ---------- screens ----------
-const SCREENS = ['home','setup','shop','leaders','profile','trophies','help','settings','admin','banned','pause','over'];
+const SCREENS = ['home','setup','shop','leaders','profile','trophies','help','settings','admin','banned','pause','over','duel'];
 let state = 'menu', curScreen = 'home', settingsFrom = 'home', shopTab = 'ships';
 function show(name){
   curScreen = name;
@@ -1192,13 +1294,14 @@ function show(name){
   $('hud').hidden = !(name === null || name === 'pause' || name === 'over');
   $('abar').hidden = name !== null;
   document.body.classList.toggle('playing', name === null);
+  checkRotate();
   const R = {home:renderHome, setup:renderSetup, shop:renderShop, leaders:renderLeaders, profile:renderProfile, trophies:renderTrophies, help:renderHelp, settings:renderSettings, admin:renderAdmin}[name];
   if (R) R();
   if (name !== null && !document.body.classList.contains('touch') && !modalOpen()){
     const f = $(name + 'Screen').querySelector('.go, .btn'); if (f) f.focus({preventScroll:true});
   }
 }
-function goHome(){ state = 'menu'; closeModal(); demoInit(); $('chips').innerHTML = ''; lastChips = ''; if (banned !== null) return enforceBan(); show('home'); }
+function goHome(){ stopMatch(); state = 'menu'; closeModal(); demoInit(); $('chips').innerHTML = ''; lastChips = ''; if (banned !== null) return enforceBan(); show('home'); }
 document.querySelectorAll('[data-home]').forEach(b => b.onclick = () => { click(); goHome(); });
 $('playBtn').onclick = () => { click(); show('setup'); };
 $('shopBtn').onclick = () => { click(); show('shop'); };
@@ -1242,19 +1345,20 @@ $('pauseSetBtn').onclick = () => { click(); settingsFrom = 'pause'; show('settin
 $('hudGear').onclick = () => { if (state !== 'play') return; click(); freeze(); settingsFrom = 'pause'; show('settings'); };
 $('setBack').onclick = () => { click(); show(settingsFrom === 'pause' && state === 'pause' ? 'pause' : 'home'); };
 $('startBtn').onclick = () => start();
-$('againBtn').onclick = () => start();
+$('againBtn').onclick = () => lastMode === 'duel' ? openDuel() : start({mode:lastMode === 'bonus' ? 'classic' : lastMode});
 $('resumeBtn').onclick = () => resume();
 $('pauseBtn').onclick = () => { if (state === 'play') openPause(); else if (state === 'pause') resume(); };
 $('homeHudBtn').onclick = () => {
   if (state !== 'play') return;
   click(); freeze();
+  if (gmode === 'duel') return modal(tr('duelQuitQ'), esc(tr('duelQuitS')), [{t:tr('exitYes'), primary:true, fn:() => finishDuel(false, 'quit')}, {t:tr('stay'), cancel:true, fn:() => { state = 'play'; }}]);
   modal(tr('exitQ'), esc(tr('exitSub')), [
     {t:tr('exitYes'), primary:true, fn:() => { bank(); goHome(); }},
     {t:tr('stay'), cancel:true, fn:() => { state = 'play'; }},
   ]);
 };
-$('restartBtn').onclick = () => { bank(); start(); };
-$('quitBtn').onclick = () => { bank(); goHome(); };
+$('restartBtn').onclick = () => { bank(); start({mode:gmode === 'run' ? 'run' : 'classic'}); };
+$('quitBtn').onclick = () => { if (gmode === 'duel') return finishDuel(false, 'quit'); bank(); goHome(); };
 
 const shipSvg = (c, b, m = 0) => { const M = MODELS[m] || MODELS[0];
   return `<svg viewBox="-24 -24 48 48" aria-hidden="true"><g transform="rotate(-90)" stroke-linejoin="round"><path d="${M.wings}" fill="${b}" stroke="${c}" stroke-width="1.4" opacity=".85"/><path d="${M.hull}" fill="${b}" stroke="${c}" stroke-width="2"/><ellipse cx="${M.pit[0]}" cy="0" rx="${M.pit[1]}" ry="${M.pit[2]}" fill="${c}"/></g></svg>`; };
@@ -1274,6 +1378,7 @@ function nextUnlockText(){
   return tr('allOpen');
 }
 function renderHome(){
+  renderModes();
   $('homeRank').innerHTML = rankHtml(save.xp);
   $('homeCoins').textContent = fmt(save.coins); $('homeGems').textContent = fmt(save.gems); $('homeBest').textContent = fmt(save.best);
   $('homeTrophies').textContent = `${Object.keys(save.trophies).length}/${TROPHIES.length}`;
@@ -1292,7 +1397,8 @@ function renderSetup(){
       ${shipSvg(own ? s.color : '#667', own ? s.body : '#223', i)}<b style="color:${own ? s.color : 'inherit'}">${esc(L(s.n))}</b><span>${esc(L(s.d))}</span>${own ? '' : lockHtml(s.rank, s.cost)}</button>`;
   }).join('');
   const n = slots();
-  $('loadTitle').textContent = tr('chooseAbils', {n, k:save.loadout.length});
+  const more = n < 3 ? (n < 2 ? SLOT2_RANK : SLOT3_RANK) : 0;
+  $('loadTitle').textContent = tr(n === 1 ? 'chooseAbil1' : 'chooseAbils', {n, k:save.loadout.length}) + (more ? tr('slotMore', {r:more}) : '');
   $('abils').innerHTML = ABILS.map(a => {
     const own = ownsAbil(a.id), idx = save.loadout.indexOf(a.id);
     return `<button class="abil${own ? '' : ' locked'}${idx >= 0 ? ' sel' : ''}" type="button" data-a="${a.id}" data-slot="${idx + 1}" style="color:${own ? a.c : '#889'}">
@@ -1313,9 +1419,15 @@ $('abils').addEventListener('click', e => {
   const id = b.dataset.a;
   if (!ownsAbil(id)) return tryBuy('abil', id);
   click();
-  const i = save.loadout.indexOf(id);
-  if (i >= 0) save.loadout.splice(i, 1);
-  else { if (save.loadout.length >= slots()) save.loadout.shift(); save.loadout.push(id); }
+  const i = save.loadout.indexOf(id), n = slots();
+  if (i >= 0){
+    if (id === 'dash' && SHIPS[save.ship].ninja) return toast('🥷', esc(tr('ninjaDash')));
+    save.loadout.splice(i, 1);
+  } else if (save.loadout.length >= n){
+    // full: say so instead of quietly swapping, so it's clear only n powers fly with you
+    if (n > 1) return toast('✋', esc(tr('pickFull', {n})), esc(tr('pickFullS')));
+    save.loadout = [id];
+  } else save.loadout.push(id);
   persist(); renderSetup();
 });
 $('diff').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; click(); save.diff = +b.dataset.d; persist(); renderSetup(); });
@@ -2059,6 +2171,7 @@ addEventListener('keydown', e => {
     case 'setup': if (enter) go('startBtn'); else if (k === 'Escape') go('setupBack'); break;
     case 'settings': if (k === 'Escape') go('setBack'); break;
     case 'banned': break;
+    case 'duel': if (k === 'Escape') go('duelCancel'); break;
     default: if (k === 'Escape'){ const b = curScreen && $(curScreen + 'Screen').querySelector('[data-home]'); if (b){ e.preventDefault(); b.click(); } }
   }
 });
@@ -2101,6 +2214,16 @@ function makeRock(x, y, size, type='rock'){
 }
 function farSpot(){ let x, y, n = 0; do { x = rnd(0,W); y = rnd(0,H); n++; } while (Math.hypot(x-ship.x, y-ship.y) < 200 && n < 50); return [x,y]; }
 function spawnWave(){
+  if (gmode === 'bonus'){
+    hole = null; meteor = null; boss = null; hitThisLevel = false;
+    for (let i=0;i<7;i++){ const [x,y] = farSpot(); rocks.push(makeRock(x, y, 2, 'gold')); }
+    for (let i=0;i<4;i++){ const [x,y] = farSpot(); rocks.push(makeRock(x, y, 2)); }
+    if (treasureT <= 0) treasureT = 1.5;
+    ufoT = 999;
+    if (!banner) banner = {t:2.6, title:tr('bonusBanner'), sub:tr('bonusSub'), boss:false};
+    bgCanvas = null; jingle([523,659,784,1047]);
+    return;
+  }
   const boss5 = isBossLevel();
   const n = boss5 ? 2 + Math.floor(level/10) : Math.min(3 + Math.ceil(level*1.5), 18);
   hole = null; hitThisLevel = false; treasureT = 0; meteor = null;
@@ -2131,25 +2254,31 @@ function start(opts = {}){
   if (banned !== null) return enforceBan();
   initAudio(); closeModal();
   fixLoadout();
+  gmode = opts.mode || 'classic'; lastMode = gmode;
   testGame = !!opts.test; testSnap = testGame ? JSON.stringify(save) : null;
   $('testTag').hidden = !testGame;
   S = SHIPS[save.ship]; D = DIFFS[save.diff];
-  score = 0; lives = S.lives + D.lives + up('life'); level = 1; bombs = (S.bombs || 1) + up('bomb'); kills = 0; bossesBeaten = 0; gameCoins = 0; gameGems = 0; cheered = false; banked = false; revived = false;
+  if (gmode === 'duel'){ S = SHIPS[duel.ship]; D = DIFFS[1]; }
+  if (gmode === 'run') D = DIFFS[1];
+  score = 0; lives = gmode === 'duel' || gmode === 'run' ? 3 : S.lives + D.lives + up('life'); level = 1; bombs = (S.bombs || 1) + up('bomb'); kills = 0; bossesBeaten = 0; gameCoins = 0; gameGems = 0; cheered = false; banked = false; revived = false;
   bullets = []; ebullets = []; rocks = []; parts = []; texts = []; pows = []; ufos = []; rings = []; coins = []; gemDrops = []; vortices = []; boss = null; hole = null;
   combo = 0; comboT = 0; timers = {}; shake = 0; flash = 0; drone = {a:0, cd:0}; ultCd = 0;
-  const ids = save.loadout.slice(0, slots());
-  if (S.ninja && !ids.includes('dash')) ids.push('dash');
+  const ids = gmode === 'duel' ? duel.abils.slice() : gmode === 'run' ? [] : save.loadout.slice(0, slots());
   abilState = ids.map(id => { const a = ABILS.find(x => x.id === id); return {a, cd:0, max: (S.ninja && id === 'dash') ? 2 : a.cd}; });
   $('abar').innerHTML = abilState.map((s,i) => `<button type="button" data-i="${i}" style="color:${s.a.c}" aria-label="${esc(L(s.a.n))}"><span>${s.a.icon}</span><kbd>${i+1}</kbd></button>`).join('');
   level = opts.level || 1;
-  ship = newShip(); spawnWave(); state = 'play';
+  ['bonus','run','duel'].forEach(m => document.body.classList.toggle('m-' + m, gmode === m));
+  if (gmode === 'bonus'){ bonusT = 40; if (!testGame) save.bonusAt = Date.now(); }
+  ship = newShip(); state = 'play';
+  if (gmode === 'run') runInit(); else spawnWave();
+  if (gmode === 'duel') duelGo();
   if (document.activeElement) document.activeElement.blur();
   show(null); updateHud();
   if (!testGame){ save.stats.games++; persist(); trophy('first'); }
 }
 // freeze = stop the game without showing the pause screen (used by the home button and the settings gear)
 function freeze(){ if (state === 'play'){ state = 'pause'; for (const k in keys) keys[k] = false; } }
-function openPause(){ if (state !== 'play') return; freeze(); show('pause'); }
+function openPause(){ if (state !== 'play') return; freeze(); $('restartBtn').hidden = gmode === 'duel' || gmode === 'bonus'; show('pause'); }
 function resume(){ if (state !== 'pause') return; closeModal(); state = 'play'; show(null); }
 function bank(){
   if (banked || !D) return null;
@@ -2162,11 +2291,14 @@ function bank(){
     return {got:0, gems:0, xp:0, fromXp:save.xp, unlocked:[], rankUp:false, test:true};
   }
   const fromScore = Math.floor(score / 150);
-  const got = gameCoins + fromScore;
-  save.coins += got; save.gems += gameGems;
-  if (score > save.best) save.best = score;
-  save.stats.maxLevel = Math.max(save.stats.maxLevel, level);
-  const fromXp = save.xp, xp = Math.floor(score / 30) + (level - 1) * 15 + bossesBeaten * 150;
+  let extra = {c:0, g:0, x:0};
+  if (gmode === 'duel') extra = duelRes && duelRes.win ? {c:80, g:3, x:60} : {c:20, g:0, x:15};
+  if (gmode === 'run' && run) save.runBest = Math.max(save.runBest, Math.floor(run.dist));
+  const got = gameCoins + fromScore + extra.c;
+  save.coins += got; save.gems += gameGems + extra.g;
+  if (gmode === 'classic' && score > save.best) save.best = score;
+  if (gmode === 'classic') save.stats.maxLevel = Math.max(save.stats.maxLevel, level);
+  const fromXp = save.xp, xp = Math.floor(score / 30) + (level - 1) * 15 + bossesBeaten * 150 + extra.x;
   save.xp += xp;
   const r0 = rankOf(fromXp), r1 = rankOf(save.xp), unlocked = [];
   for (let r = r0 + 1; r <= r1; r++) unlocked.push(...unlocksAt(r));
@@ -2180,7 +2312,7 @@ function bank(){
   if (r1 >= 10) trophy('rank10');
   if (save.coins >= 2000) trophy('rich');
   if (save.gems >= 50) trophy('gems50');
-  const gems = gameGems + rankGems;
+  const gems = gameGems + rankGems + extra.g;
   gameCoins = 0; gameGems = 0; score = 0;
   return {got, gems, xp, fromXp, unlocked, rankUp: r1 > r0};
 }
@@ -2232,6 +2364,8 @@ function updateHud(){
     $('lives').textContent = lives > 6 ? `♥×${lives}` : ('♥'.repeat(Math.max(0,lives)) || '—');
     $('combo').textContent = m > 1 ? tr('combo', {m}) : '';
   }
+  const tag = gmode === 'bonus' ? `🎁 ${Math.ceil(bonusT)}` : gmode === 'run' && run ? `🌀 ${L(zoneOf(run.zone).n)} · ${fmt(run.dist)} ${tr('meters')}` : '';
+  if ($('modeTag').textContent !== tag){ $('modeTag').textContent = tag; $('modeTag').hidden = !tag; }
   const html = Object.keys(timers).filter(k => timers[k] > 0).map(k =>
     `<span class="chip" style="color:${POW[k].c}"><i>${POW[k].icon}</i><span style="color:var(--ink)">${esc(L(POW[k].n))} ${Math.ceil(timers[k])}</span></span>`).join('');
   if (html !== lastChips){ $('chips').innerHTML = html; lastChips = html; }
@@ -2285,7 +2419,7 @@ function killRock(r, silent){
   boom(r.x, r.y, 10 + r.size*7, col); ring(r.x, r.y, col, r.r*1.6);
   shake = Math.max(shake, r.size * 2.5);
   if (!silent) noise(.15 + r.size*.08, .08 + r.size*.03);
-  if (r.type === 'gold'){ dropPow(r.x, r.y, true); dropCoins(r.x, r.y, 5); if (Math.random() < .25) dropGems(r.x, r.y, 1); jingle([880,1175]); }
+  if (r.type === 'gold'){ dropPow(r.x, r.y, true); dropCoins(r.x, r.y, 5); if (Math.random() < (gmode === 'bonus' ? .45 : .25)) dropGems(r.x, r.y, 1); jingle([880,1175]); }
   else {
     dropPow(r.x, r.y, false);
     if (Math.random() < .18 + up('luck')*.06) dropCoins(r.x, r.y, 1);
@@ -2311,6 +2445,12 @@ function hitShip(){
     beep(300,.3,'triangle',.08,-150); floatText(ship.x, ship.y-30, tr('shieldSaved'), POW.shield.c, 16);
     return;
   }
+  if (gmode === 'bonus'){
+    bonusT = Math.max(0, bonusT - 3); combo = 0;
+    boom(ship.x, ship.y, 30, S.color, 200); noise(.4, .15); shake = 10;
+    respawnHere(1.5); floatText(ship.x, ship.y - 36, tr('bonusHit'), '#ff5d73', 20);
+    return;
+  }
   lives--; combo = 0; hitThisLevel = true;
   boom(ship.x, ship.y, 50, S.color, 260); ring(ship.x, ship.y, S.color, 120, 300);
   noise(.7, .2); shake = 16;
@@ -2322,7 +2462,7 @@ function hitShip(){
     timers = {shield:6}; respawnHere(3);
     return;
   }
-  if (lives <= 0){ gameOver(); return; }
+  if (lives <= 0){ if (gmode === 'duel') duelDied(); else gameOver(); return; }
   timers = {}; // gadgets are lost, but you stay where you were
   respawnHere(2.5);
   floatText(ship.x, ship.y - 36, lives === 1 ? tr('lastLife') : tr('ouch', {n:lives}), '#ff5d73', 18);
@@ -2404,6 +2544,11 @@ function nearestTarget(x, y, maxD){
 function update(dt){
   const sf = spd();
   save.stats.time += dt;
+  if (gmode === 'duel') duel.el += dt;
+  if (gmode === 'bonus'){
+    bonusT -= dt;
+    if (bonusT <= 0){ bonusT = 0; updateHud(); gameOver(); return; }
+  }
   // ship movement
   if (keys.left) ship.a -= S.turn*dt;
   if (keys.right) ship.a += S.turn*dt;
@@ -2516,7 +2661,7 @@ function update(dt){
   // ufos
   ufoT -= dt;
   if (level >= 2 && ufoT <= 0 && ufos.length < Math.min(6, 1 + Math.floor(level/3))){ spawnUfo(); ufoT = Math.max(2.5, rnd(12, 20) - level*.9); }
-  if (treasureT > 0){ treasureT -= dt; if (treasureT <= 0) spawnTreasure(); }
+  if (treasureT > 0){ treasureT -= dt; if (treasureT <= 0){ spawnTreasure(); if (gmode === 'bonus') treasureT = 6; } }
   for (const u of ufos){
     u.t += dt*sf; u.x += u.vx*dt*sf; u.y = u.baseY + Math.sin(u.t*(u.treasure ? 4 : 2))*(u.treasure ? 60 : 40); if (u.hit > 0) u.hit -= dt;
     u.shotT -= dt*sf;
@@ -2643,7 +2788,7 @@ function update(dt){
     if (hole) trophy('hole');
     const bonus = Math.round(500 * level * D.pts);
     score += bonus; floatText(W/2, H/2 + 40, tr('bonus', {n:bonus}), '#8dff9a', 22);
-    level++; if (level >= 10) trophy('lvl10');
+    if (gmode !== 'bonus'){ level++; if (level >= 10) trophy('lvl10'); }
     spawnWave();
   }
   if (score >= 10000) trophy('s10k');
@@ -2674,13 +2819,20 @@ function laserHits(dmg){
 
 function gameOver(){
   state = 'over';
-  const finalScore = score, isBest = score > save.best, lvl = level;
+  const finalScore = score, isBest = gmode === 'classic' && score > save.best, lvl = level, mode = gmode, prevRun = save.runBest, dist = run ? Math.floor(run.dist) : 0;
+  if (mode === 'bonus' && !testGame) trophy('bonus1');
   const res = bank() || {got:0, gems:0, xp:0, fromXp:save.xp, unlocked:[], rankUp:false};
+  $('overTitle').textContent = mode === 'bonus' ? tr('bonusEnd') : mode === 'duel' && duelRes ? tr(duelRes.win ? 'duelWinT' : 'duelLoseT') : tr('over');
+  $('againBtn').hidden = mode === 'bonus';
+  $('againBtn').querySelector('span').textContent = tr(mode === 'duel' ? 'duelAgain' : 'again');
   $('finalScore').textContent = tr('finalScore', {n:fmt(finalScore)});
-  $('finalInfo').textContent = tr('finalInfo', {l:lvl, k:fmt(kills)}) + (bossesBeaten ? tr('finalBoss', {b:bossesBeaten}) : '');
+  $('finalInfo').textContent = mode === 'run' ? tr('runInfo', {m:fmt(dist), s:run.zone}) :
+    mode === 'duel' && duelRes ? tr(duelRes.why === 'left' ? 'duelLeft' : duelRes.win ? 'duelWin' : 'duelLose', {nick:duelRes.nick}) :
+    tr('finalInfo', {l:lvl, k:fmt(kills)}) + (bossesBeaten ? tr('finalBoss', {b:bossesBeaten}) : '');
   $('finalCoins').innerHTML = `${CI} +${fmt(res.got)}`;
   $('finalGems').innerHTML = `${GI} +${fmt(res.gems)}`;
-  $('finalBest').textContent = res.test ? tr('testOver') : isBest ? tr('newBest') : tr('yourBest', {n:fmt(save.best)});
+  $('finalBest').textContent = res.test ? tr('testOver') : mode === 'bonus' ? tr('bonusOver') : mode === 'duel' ? tr('duelStat', {w:save.duel.w, l:save.duel.l}) :
+    mode === 'run' ? (dist > prevRun ? tr('runNewBest') : tr('runYourBest', {m:fmt(save.runBest)})) : isBest ? tr('newBest') : tr('yourBest', {n:fmt(save.best)});
   $('finalRank').innerHTML = `<span class="rk" style="font-size:16px;color:var(--laser)">${tr('xpGain', {n:fmt(res.xp)})}${res.rankUp ? tr('rankedUp') : ''}</span>` + rankHtml(save.xp, res.rankUp ? undefined : res.fromXp);
   $('finalUnlocks').innerHTML = res.unlocked.map((u,i) => `<span class="u" style="color:${u.c};animation-delay:${.3 + i*.15}s">🔓 ${esc(u.name)}<small>${esc(tr('newInShop'))}: ${esc(u.kind)}</small></span>`).join('');
   requestAnimationFrame(() => requestAnimationFrame(() => { const bar = $('finalRank').querySelector('.xpbar i'); if (bar) bar.style.width = bar.dataset.to + '%'; }));
@@ -2701,6 +2853,7 @@ function updateFx(dt){
 // ---------- home demo scene ----------
 let demoShip = null;
 function demoInit(){
+  gmode = 'classic'; ['bonus','run','duel'].forEach(m => document.body.classList.remove('m-' + m));
   level = 1; hole = null; boss = null; vortices = []; meteor = null; treasureT = 0; timers = {}; ufos = []; pows = []; coins = []; gemDrops = []; bullets = []; ebullets = []; texts = []; rings = [];
   ship = {x:W/2, y:H/2, vx:0, vy:0, a:0, r:14, inv:0};
   rocks = Array.from({length:7}, () => makeRock(rnd(0,W), rnd(0,H), Math.random() < .5 ? 3 : 2));
@@ -2730,8 +2883,9 @@ function updateDemo(dt){
 function buildBg(){
   bgCanvas = document.createElement('canvas');
   bgCanvas.width = Math.max(1, W); bgCanvas.height = Math.max(1, H);
-  const g = bgCanvas.getContext('2d'), th = theme();
+  const g = bgCanvas.getContext('2d'); let th = theme();
   g.fillStyle = '#070b1f'; g.fillRect(0,0,W,H);
+  if (gmode === 'bonus' && state !== 'menu') Object.assign(th = {...th}, {a:'#6b4a00', b:'#5a2a00'});
   const blob = (x, y, r, c) => { const gr = g.createRadialGradient(x,y,0,x,y,r); gr.addColorStop(0, c); gr.addColorStop(1, 'rgba(7,11,31,0)'); g.globalAlpha = .55; g.fillStyle = gr; g.fillRect(0,0,W,H); };
   blob(W*.2, H*.3, Math.max(W,H)*.55, th.a);
   blob(W*.85, H*.75, Math.max(W,H)*.5, th.b);
@@ -3016,12 +3170,485 @@ function draw(t){
   if (flash > 0 && save.settings.flash){ ctx.globalAlpha = flash*.7; ctx.fillStyle = '#f3e8ff'; ctx.fillRect(0,0,W,H); ctx.globalAlpha = 1; }
 }
 
+// ---------- phone held upright: suggest turning it sideways ----------
+let rotateClosed = false;
+function checkRotate(){
+  const el = $('rotateTip'); if (!el) return;
+  el.hidden = !(IS_TOUCH && !rotateClosed && innerHeight > innerWidth * 1.1 && [null, 'home', 'setup', 'pause', 'duel'].includes(curScreen));
+}
+addEventListener('resize', checkRotate);
+$('rotateX').onclick = () => { click(); rotateClosed = true; checkRotate(); };
+
+// ---------- special modes on the home screen ----------
+let bonusT = 0;
+const DAY = 24 * 3600 * 1000;
+const bonusLeft = () => Math.max(0, Math.min(DAY, num(save.bonusAt) + DAY - Date.now()));
+const hms = ms => { const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, p = n => String(n).padStart(2, '0'); return h ? `${h}:${p(m)}:${p(x)}` : `${m}:${p(x)}`; };
+function renderModes(){
+  const left = bonusLeft();
+  $('bonusInfo').textContent = left ? tr('bonusIn', {t:hms(left)}) : tr('bonusReady');
+  $('bonusBtn').classList.toggle('ready', !left);
+  $('runInfo').textContent = save.runBest ? tr('runBestS', {m:fmt(save.runBest)}) : tr('newM');
+  $('duelInfo').textContent = save.duel.w || save.duel.l ? tr('duelWL', {w:save.duel.w, l:save.duel.l}) : tr('duelWorld');
+}
+setInterval(() => { if (curScreen === 'home' && state === 'menu') renderModes(); }, 1000);
+$('bonusBtn').onclick = () => {
+  click();
+  const left = bonusLeft();
+  if (left) return modal(tr('bonusQ'), esc(tr('bonusWait', {t:hms(left)})), [{t:tr('ok'), primary:true}]);
+  modal(tr('bonusQ'), esc(tr('bonusD')), [{t:tr('bonusGo'), primary:true, fn:() => start({mode:'bonus'})}, {t:tr('cancel'), cancel:true}]);
+};
+$('runBtn').onclick = () => {
+  click();
+  modal(tr('runQ'), `<p>${esc(tr('runD'))}</p><p class="note">${esc(tr(IS_TOUCH ? 'runTouch' : 'runKeys'))}</p>` + (save.runBest ? `<p class="note ok">${esc(tr('runYourBest', {m:fmt(save.runBest)}))}</p>` : ''),
+    [{t:tr('runGo'), primary:true, fn:() => start({mode:'run'})}, {t:tr('cancel'), cancel:true}]);
+};
+$('duelBtn').onclick = () => openDuel();
+
+// ---------- neon rush: a different game inside the game ----------
+// you fly forward through a neon tunnel: dodge walls, lasers and mines, grab energy orbs; every 600 m is a new, harder zone
+const ZONES = [
+  {n:['כביש הניאון','Neon Road'], a:'#ff4fd8', b:'#7a2cff'},
+  {n:['עמק הלייזרים','Laser Valley'], a:'#00e5ff', b:'#2b5bff'},
+  {n:['שדה המוקשים','Mine Field'], a:'#ffb14e', b:'#ff3d6e'},
+  {n:['מנהרת הסופה','Storm Tunnel'], a:'#8dff9a', b:'#00a2a8'},
+  {n:['לב הגלקסיה','Galaxy Core'], a:'#ffe066', b:'#ff4fd8'},
+];
+const ZONE_LEN = 600;
+const RUN_POW = {
+  ghost: {c:'#c9a0ff', icon:'👻', t:4},
+  magnet:{c:'#b0ffea', icon:'🧲', t:7},
+  turbo: {c:'#ffe066', icon:'🚀', t:3},
+  shield:{c:'#6ecbff', icon:'🛡', t:0},
+};
+let run = null, runObs = [], runOrbs = [], runDrag = null;
+const zoneOf = n => ZONES[(n - 1) % ZONES.length];
+function runInit(){
+  run = {x:W/2, vx:0, dist:0, zone:1, gap:60, orbGap:200, orbs:0, ghost:0, magnet:0, turbo:0, shield:false, t:0, grid:0, speed:0};
+  runObs = []; runOrbs = []; runDrag = null; bombs = 0;
+  ship = {x:W/2, y:H*.8, vx:0, vy:0, a:-Math.PI/2, r:13, inv:2, thrust:true};
+  banner = {t:2.8, title:tr('runZone', {n:1}) + ' · ' + L(ZONES[0].n), sub:tr('runSub'), boss:false};
+  jingle([392,523,659,784]);
+}
+const runY = () => H * .8;
+function runSpawnObstacle(){
+  const z = run.zone, kinds = ['wall'];
+  if (z >= 2) kinds.push('laser', 'gate');
+  if (z >= 3) kinds.push('mine', 'mine');
+  if (z >= 4) kinds.push('blocks');
+  if (z >= 5) kinds.push('spin');
+  const k = kinds[Math.floor(Math.random() * kinds.length)];
+  const gw = Math.max(92, Math.min(W * .5, 230) - z * 8);
+  const y = -40;
+  if (k === 'wall' || k === 'gate') runObs.push({k, y, h:16, gx:rnd(gw/2 + 10, W - gw/2 - 10), gw, ph:rnd(0, TAU), amp:k === 'gate' ? Math.min(W * .25, 140) : 0});
+  else if (k === 'laser') runObs.push({k, y, h:6, ph:rnd(0, 2), per:Math.max(1.4, 2.2 - z * .08)});
+  else if (k === 'mine') runObs.push({k, y, x:rnd(30, W - 30), r:15, vx:rnd(60, 140) * (Math.random() < .5 ? -1 : 1), rot:0});
+  else if (k === 'blocks'){ const bw = Math.min(W * .3, 160); runObs.push({k, y, h:22, bw, x1:rnd(0, W - bw), v:rnd(120, 200)}); }
+  else if (k === 'spin') runObs.push({k, y, x:W/2 + rnd(-W*.15, W*.15), len:Math.min(W * .42, 230), a:rnd(0, TAU), va:rnd(1.4, 2.2) * (Math.random() < .5 ? -1 : 1)});
+}
+function runSpawnOrbs(){
+  if (Math.random() < .1 + Math.min(.08, run.zone * .01)){
+    const ks = Object.keys(RUN_POW), k = ks[Math.floor(Math.random() * ks.length)];
+    runOrbs.push({x:rnd(30, W - 30), y:-30, r:14, pow:k, t:0}); return;
+  }
+  const n = 3 + Math.floor(Math.random() * 4), x0 = rnd(40, W - 40), dx = rnd(-30, 30);
+  for (let i = 0; i < n; i++) runOrbs.push({x:Math.max(20, Math.min(W - 20, x0 + dx * i)), y:-30 - i * 34, r:7, t:rnd(0, 6)});
+}
+// distance from point to a line segment, for the spinning bars
+const segDist = (px, py, ax, ay, bx, by) => { const dx = bx-ax, dy = by-ay, l = dx*dx + dy*dy || 1, t = Math.max(0, Math.min(1, ((px-ax)*dx + (py-ay)*dy) / l)); return Math.hypot(px - ax - t*dx, py - ay - t*dy); };
+function runHit(o){
+  if (ship.inv > 0 || run.ghost > 0 || run.turbo > 0) return false;
+  if (run.shield){ run.shield = false; ship.inv = 1.2; ring(ship.x, ship.y, RUN_POW.shield.c, 90, 320); beep(300,.3,'triangle',.08,-150); floatText(ship.x, ship.y - 30, tr('shieldSaved'), RUN_POW.shield.c, 16); return true; }
+  lives--; ship.inv = 2; shake = 16; flash = .3;
+  boom(ship.x, ship.y, 40, S.color, 240); ring(ship.x, ship.y, S.color, 120, 300); noise(.6, .2);
+  if (lives <= 0){ updateHud(); gameOver(); return true; }
+  floatText(ship.x, ship.y - 36, lives === 1 ? tr('lastLife') : tr('ouch', {n:lives}), '#ff5d73', 18);
+  return true;
+}
+function updateRun(dt){
+  save.stats.time += dt; run.t += dt;
+  const zp = (run.dist % ZONE_LEN) / ZONE_LEN;
+  const base = Math.min(760, 230 + (run.zone - 1) * 45 + zp * 40);
+  const boost = run.turbo > 0 ? 1.7 : keys.up ? 1.3 : keys.down ? .65 : 1;
+  run.speed = base * boost;
+  const dy = run.speed * dt;
+  run.dist += dy / 10; run.grid += dy / 90;
+  score += dy / 10 * (keys.up || run.turbo > 0 ? 1.5 : 1);
+  level = run.zone;
+  // steering: keys, or drag a finger / the mouse
+  const acc = 2600;
+  if (runDrag !== null){ run.vx = Math.max(-900, Math.min(900, (runDrag - ship.x) * 12)); }
+  else { if (keys.left) run.vx -= acc * dt; if (keys.right) run.vx += acc * dt; run.vx *= Math.pow(.004, dt); }
+  ship.x = Math.max(ship.r + 4, Math.min(W - ship.r - 4, ship.x + run.vx * dt)); ship.y = runY();
+  ship.a = -Math.PI/2 + Math.max(-.35, Math.min(.35, run.vx / 1600));
+  if (ship.inv > 0) ship.inv -= dt;
+  for (const k of ['ghost','magnet','turbo']) if (run[k] > 0) run[k] -= dt;
+  // engine trail
+  for (let i = 0; i < (run.turbo > 0 ? 4 : 2); i++) parts.push({x:ship.x + rnd(-5,5), y:ship.y + 16, vx:rnd(-30,30), vy:rnd(200,320), life:.35, color:Math.random() < .5 ? zoneOf(run.zone).a : '#ffe066', size:3});
+  // new zone
+  const z = 1 + Math.floor(run.dist / ZONE_LEN);
+  if (z > run.zone){
+    run.zone = z; const Z = zoneOf(z);
+    banner = {t:2.6, title:tr('runZone', {n:z}) + ' · ' + L(Z.n), sub:tr('runFaster'), boss:false};
+    score += 300 * (z - 1); floatText(W/2, H*.45, '+' + fmt(300 * (z - 1)), Z.a, 24);
+    jingle([523,659,784,1047,1319]); flash = .25;
+  }
+  if (run.dist >= 1000) trophy('run1k');
+  // spawning by distance travelled
+  run.gap -= dy; run.orbGap -= dy;
+  if (run.gap <= 0){ runSpawnObstacle(); run.gap = Math.max(150, 330 - run.zone * 22) + rnd(0, 80); }
+  if (run.orbGap <= 0){ runSpawnOrbs(); run.orbGap = rnd(140, 260); }
+  // obstacles
+  for (const o of runObs){
+    o.y += dy;
+    if (o.k === 'gate') o.gx2 = Math.max(o.gw/2 + 6, Math.min(W - o.gw/2 - 6, o.gx + Math.sin(run.t * 1.8 + o.ph) * o.amp));
+    if (o.k === 'mine'){ o.x += o.vx * dt; o.rot += dt * 3; if (o.x < o.r || o.x > W - o.r) o.vx *= -1; }
+    if (o.k === 'blocks'){ o.x1 += o.v * dt; if (o.x1 < 0 || o.x1 > W - o.bw) o.v *= -1; o.x1 = Math.max(0, Math.min(W - o.bw, o.x1)); }
+    if (o.k === 'spin') o.a += o.va * dt;
+    if (o.done) continue;
+    let hit = false, near = false;
+    const r = ship.r * .8;
+    if (o.k === 'wall' || o.k === 'gate'){
+      const gx = o.k === 'gate' ? o.gx2 : o.gx;
+      if (Math.abs(o.y - ship.y) < o.h/2 + r){
+        const inGap = ship.x - r > gx - o.gw/2 && ship.x + r < gx + o.gw/2;
+        if (!inGap) hit = true; else if (Math.min(ship.x - (gx - o.gw/2), gx + o.gw/2 - ship.x) < r + 14) near = true;
+      }
+    } else if (o.k === 'laser'){
+      o.on = ((run.t + o.ph) % o.per) < o.per * .45;
+      if (o.on && Math.abs(o.y - ship.y) < r + 3) hit = true;
+    } else if (o.k === 'mine'){
+      if (Math.hypot(o.x - ship.x, o.y - ship.y) < o.r + r) hit = true;
+    } else if (o.k === 'blocks'){
+      const x2 = W - o.bw - o.x1;
+      if (Math.abs(o.y - ship.y) < o.h/2 + r && ((ship.x + r > o.x1 && ship.x - r < o.x1 + o.bw) || (ship.x + r > x2 && ship.x - r < x2 + o.bw))) hit = true;
+    } else if (o.k === 'spin'){
+      const cx = Math.cos(o.a) * o.len/2, cy = Math.sin(o.a) * o.len/2;
+      if (segDist(ship.x, ship.y, o.x - cx, o.y - cy, o.x + cx, o.y + cy) < r + 5) hit = true;
+    }
+    if (hit && runHit(o)){ o.done = true; continue; }
+    if (o.y > ship.y + 30){
+      o.done = true;
+      if (near && ship.inv <= 0){ const n = 50 * run.zone; score += n; floatText(ship.x, ship.y - 34, tr('runNear', {n}), '#8dff9a', 16); beep(1500,.08,'triangle',.04,400); }
+    }
+  }
+  runObs = runObs.filter(o => o.y < H + 80);
+  // orbs and power orbs
+  for (const b of runOrbs){
+    b.y += dy; b.t += dt;
+    const d = Math.hypot(b.x - ship.x, b.y - ship.y);
+    if (run.magnet > 0 && d < 260 && !b.pow){ b.x += (ship.x - b.x) * Math.min(1, dt * 8); b.y += (ship.y - b.y) * Math.min(1, dt * 8); }
+    if (d < b.r + ship.r){
+      b.got = true;
+      if (b.pow){
+        const P = RUN_POW[b.pow];
+        if (b.pow === 'shield') run.shield = true; else run[b.pow] = P.t;
+        ring(ship.x, ship.y, P.c, 70, 260); floatText(ship.x, ship.y - 40, tr('run_' + b.pow), P.c, 20); jingle([660,880,1175]);
+        save.stats.pows++;
+      } else {
+        run.orbs++; score += 15 * run.zone; beep(1320 + (run.orbs % 5) * 120, .06, 'triangle', .04);
+        if (run.orbs % 5 === 0){ gameCoins++; floatText(ship.x, ship.y - 30, '+1', '#ffc93c', 14); }
+        if (run.orbs % 50 === 0){ gameGems++; floatText(ship.x, ship.y - 46, '+1 💎', '#5ff3ff', 18); jingle([1568,2093,2637]); }
+      }
+    }
+  }
+  runOrbs = runOrbs.filter(b => !b.got && b.y < H + 40);
+  if (banner){ banner.t -= dt; if (banner.t <= 0) banner = null; }
+  updateHud();
+}
+cv.addEventListener('pointerdown', e => { if (gmode === 'run' && state === 'play'){ runDrag = e.clientX - cv.getBoundingClientRect().left; } });
+cv.addEventListener('pointermove', e => { if (runDrag !== null && gmode === 'run') runDrag = e.clientX - cv.getBoundingClientRect().left; });
+addEventListener('pointerup', () => { runDrag = null; });
+addEventListener('pointercancel', () => { runDrag = null; });
+function drawRun(t){
+  const Z = zoneOf(run.zone), hz = H * .3;
+  ctx.save();
+  if (shake > 0 && save.settings.shake) ctx.translate(rnd(-shake, shake)*.5, rnd(-shake, shake)*.5);
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#16002e'); g.addColorStop(.3, '#2a0846'); g.addColorStop(.31, '#0b0118'); g.addColorStop(1, '#05000c');
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+  // retro sun with stripes
+  const sr = Math.min(W, H) * .17, sx = W/2, sy = hz - sr * .25;
+  const sg = ctx.createLinearGradient(0, sy - sr, 0, sy + sr); sg.addColorStop(0, Z.a); sg.addColorStop(1, Z.b);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, hz); ctx.clip();
+  ctx.shadowColor = Z.a; ctx.shadowBlur = 40; ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, TAU); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#2a0846'; for (let i = 0; i < 6; i++){ const y = sy + sr * (.05 + i * .17), h = 2 + i * 1.6; ctx.fillRect(sx - sr, y, sr * 2, h); }
+  ctx.restore();
+  for (const s of stars){ if (s.y * H > hz) continue; ctx.globalAlpha = .3 + s.z * .5; ctx.fillStyle = '#fff'; ctx.fillRect(s.x * W, s.y * H, s.z * 1.6, s.z * 1.6); }
+  ctx.globalAlpha = 1;
+  // glowing grid floor in perspective
+  ctx.strokeStyle = Z.a; ctx.lineWidth = 1.5; ctx.shadowColor = Z.a; ctx.shadowBlur = 8;
+  ctx.globalAlpha = .55;
+  for (let i = -12; i <= 12; i++){ ctx.beginPath(); ctx.moveTo(W/2 + i * W * .04, hz); ctx.lineTo(W/2 + i * W * .22, H); ctx.stroke(); }
+  const fr = run.grid % 1;
+  for (let i = 0; i < 14; i++){ const p = (i + fr) / 14, y = hz + (H - hz) * p * p; ctx.globalAlpha = .15 + p * .6; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  ctx.fillStyle = Z.a; ctx.fillRect(0, hz - 1, W, 2);
+  // obstacles
+  const glow = (c, b) => { ctx.shadowColor = c; ctx.shadowBlur = b; };
+  for (const o of runObs){
+    if (o.k === 'wall' || o.k === 'gate'){
+      const gx = o.k === 'gate' ? (o.gx2 ?? o.gx) : o.gx, c = o.k === 'gate' ? '#ffe066' : Z.b;
+      glow(c, 18); ctx.fillStyle = c;
+      ctx.fillRect(0, o.y - o.h/2, gx - o.gw/2, o.h); ctx.fillRect(gx + o.gw/2, o.y - o.h/2, W - gx - o.gw/2, o.h);
+      ctx.fillStyle = '#fff'; ctx.globalAlpha = .7; ctx.fillRect(0, o.y - 1.5, gx - o.gw/2, 3); ctx.fillRect(gx + o.gw/2, o.y - 1.5, W - gx - o.gw/2, 3); ctx.globalAlpha = 1;
+    } else if (o.k === 'laser'){
+      const on = ((run.t + o.ph) % o.per) < o.per * .45;
+      if (on){ glow('#ff3d6e', 24); ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 4, W, 8); ctx.fillStyle = '#fff'; ctx.fillRect(0, o.y - 1.5, W, 3); }
+      else { ctx.strokeStyle = '#ff3d6e'; ctx.globalAlpha = .45; ctx.setLineDash([8, 10]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, o.y); ctx.lineTo(W, o.y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+      ctx.shadowBlur = 0; ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 10, 10, 20); ctx.fillRect(W - 10, o.y - 10, 10, 20);
+    } else if (o.k === 'mine'){
+      ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot); glow('#ff9f43', 16); ctx.fillStyle = '#3a1200'; ctx.strokeStyle = '#ff9f43'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); for (let i = 0; i < 16; i++){ const a = i / 16 * TAU, rr = i % 2 ? o.r * .62 : o.r * 1.15; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = Math.sin(t / 90) > 0 ? '#ff3d3d' : '#ffe066'; ctx.beginPath(); ctx.arc(0, 0, 4, 0, TAU); ctx.fill(); ctx.restore();
+    } else if (o.k === 'blocks'){
+      const x2 = W - o.bw - o.x1; glow('#00e5ff', 16); ctx.fillStyle = '#00e5ff';
+      ctx.fillRect(o.x1, o.y - o.h/2, o.bw, o.h); ctx.fillRect(x2, o.y - o.h/2, o.bw, o.h);
+      ctx.fillStyle = '#0b2030'; ctx.fillRect(o.x1 + 4, o.y - o.h/2 + 4, o.bw - 8, o.h - 8); ctx.fillRect(x2 + 4, o.y - o.h/2 + 4, o.bw - 8, o.h - 8);
+    } else if (o.k === 'spin'){
+      ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.a); glow('#8dff9a', 20); ctx.fillStyle = '#8dff9a';
+      ctx.fillRect(-o.len/2, -5, o.len, 10); ctx.fillStyle = '#fff'; ctx.fillRect(-o.len/2, -1.5, o.len, 3);
+      ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fill(); ctx.restore();
+    }
+    ctx.shadowBlur = 0;
+  }
+  // orbs
+  for (const b of runOrbs){
+    if (b.pow){
+      const P = RUN_POW[b.pow], pulse = 1 + Math.sin(b.t * 6) * .12;
+      glow(P.c, 20); ctx.strokeStyle = P.c; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * pulse, 0, TAU); ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(P.icon, b.x, b.y + 1); ctx.textBaseline = 'alphabetic';
+    } else {
+      glow('#5ff3ff', 14); ctx.fillStyle = '#5ff3ff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (1 + Math.sin(b.t * 5) * .15), 0, TAU); ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x - 2, b.y - 2, 2.5, 0, TAU); ctx.fill();
+    }
+  }
+  ctx.shadowBlur = 0;
+  for (const r of rings){ ctx.globalAlpha = Math.max(0, 1 - r.r/r.max); ctx.strokeStyle = r.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, TAU); ctx.stroke(); }
+  for (const p of parts){ ctx.globalAlpha = Math.min(1, p.life*2); ctx.fillStyle = p.color; ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size); }
+  ctx.globalAlpha = 1;
+  // the ship
+  if (state !== 'over' && !(ship.inv > 0 && Math.floor(t/100) % 2)){
+    const [sc, sb] = shipLook(S);
+    if (run.ghost > 0) ctx.globalAlpha = .45 + Math.sin(t / 60) * .15;
+    if (run.turbo > 0){ glow('#ffe066', 30); }
+    drawShipShape(ship.x, ship.y, ship.a, sc, sb, true, SHIPS.indexOf(S));
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    if (run.shield){ ctx.strokeStyle = RUN_POW.shield.c; ctx.globalAlpha = .8; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ship.x, ship.y, 24 + Math.sin(t/120) * 1.5, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+    if (run.magnet > 0){ ctx.strokeStyle = RUN_POW.magnet.c; ctx.globalAlpha = .25; ctx.setLineDash([4,8]); ctx.beginPath(); ctx.arc(ship.x, ship.y, 60 + (t/20) % 40, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+  }
+  // speed lines while boosting
+  if (run.turbo > 0 || keys.up){ ctx.strokeStyle = '#fff'; ctx.globalAlpha = .25; ctx.lineWidth = 1.5; for (let i = 0; i < 10; i++){ const x = (i * 97 + t * .7) % W, y = (i * 53 + t * 1.3) % H; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 40); ctx.stroke(); } ctx.globalAlpha = 1; }
+  ctx.textAlign = 'center';
+  for (const tx of texts){ ctx.direction = /[א-ת]/.test(tx.text) ? 'rtl' : 'ltr'; ctx.globalAlpha = Math.min(1, tx.life*1.5); ctx.fillStyle = tx.color; ctx.font = `${tx.size}px "Secular One", Rubik, sans-serif`; ctx.fillText(tx.text, tx.x, tx.y); }
+  ctx.globalAlpha = 1;
+  if ((state === 'play' || state === 'pause') && banner){
+    ctx.direction = lang === 'he' ? 'rtl' : 'ltr';
+    ctx.globalAlpha = Math.max(0, Math.min(1, banner.t, (2.8 - banner.t) * 3));
+    glow(Z.a, 20); ctx.fillStyle = Z.a; ctx.font = `${Math.round(Math.min(W, H) / 12)}px "Secular One", Rubik, sans-serif`;
+    ctx.fillText(banner.title, W/2, H * .45); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#eaf2ff'; ctx.font = `${Math.round(Math.min(W, H) / 26)}px Rubik, sans-serif`; ctx.fillText(banner.sub, W/2, H * .45 + Math.min(W, H) / 14);
+    ctx.globalAlpha = 1;
+  }
+  // power timers
+  const act = ['ghost','magnet','turbo'].filter(k => run[k] > 0);
+  ctx.font = '15px Rubik, sans-serif'; ctx.direction = 'ltr';
+  act.forEach((k, i) => { ctx.fillStyle = RUN_POW[k].c; ctx.fillText(`${RUN_POW[k].icon} ${Math.ceil(run[k])}`, W/2 + (i - (act.length - 1) / 2) * 70, H - 18); });
+  ctx.restore();
+  if (flash > 0 && save.settings.flash){ ctx.globalAlpha = flash * .5; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+}
+
+// ---------- 1v1 against a random player from anywhere ----------
+// lobby/<id>  "I'm looking for a match" (refreshed every few seconds while searching)
+// duel/<id>   an offer from a host to a guest; the guest accepts by writing match:<host> in its lobby row
+// duelp/<id>  my live status during the match (score, hearts, alive), read by the other player
+// The player with the smaller id makes the offer, so two players never offer to each other at once.
+let duel = null, duelRes = null, mm = null;
+const LOBBY_FRESH = 30000;
+function mulberry(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// both players get the same random ship and the same two powers
+function rollDuel(seed){
+  const r = mulberry(seed), ship = Math.floor(r() * SHIPS.length);
+  const pool = ABILS.map(a => a.id);
+  for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  let abils = pool.slice(0, 2);
+  if (SHIPS[ship].ninja && !abils.includes('dash')) abils = ['dash', abils[0]];
+  return {ship, abils};
+}
+const me4lobby = extra => ({nick:save.nick, avatar:save.avatar, country:save.country, rank:myRank(), want:true, match:'', t:Date.now(), ...extra});
+function duelScreen(msg, sub, html){
+  $('duelMsg').textContent = msg; $('duelSub').textContent = sub || '';
+  if (html !== undefined) $('duelStats').innerHTML = html;
+}
+function openDuel(){
+  click();
+  if (banned !== null) return enforceBan();
+  if (cloud !== 'on' || !db || !uid) return modal(tr('duelT'), esc(tr('duelOff')), [{t:tr('ok'), primary:true}]);
+  stopMatch(); stopDuel();
+  state = 'menu'; demoInit(); closeModal();
+  show('duel');
+  $('duelScreen').classList.remove('found');
+  $('duelCancel').hidden = false;
+  $('duelAv').textContent = save.avatar || '🚀';
+  duelScreen(tr('duelSearch'), tr('duelD'), '');
+  startMatch();
+}
+function startMatch(){
+  const me = {on:true, busy:false, tried:{}, hb:0, tick:0, n:0};
+  mm = me;
+  const beat = () => { if (mm === me && me.on) db.doc('lobby/' + uid).set(me4lobby()).catch(() => {}); };
+  beat(); me.hb = setInterval(beat, 4000);
+  const tick = async () => {
+    if (mm !== me || !me.on || me.busy) return;
+    me.busy = true;
+    try { await matchTick(me); } catch(e){}
+    me.busy = false;
+  };
+  me.tick = setInterval(tick, 2000); setTimeout(tick, 600);
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function matchTick(me){
+  const now = Date.now();
+  // 1. did someone offer me a match?
+  const offers = await db.collection('duel').where('guest', '==', uid).get();
+  if (mm !== me || !me.on) return;
+  const offer = offers.docs.map(d => ({id:d.id, ...d.data()})).find(o => o.state === 'offer' && Math.abs(now - num(o.t)) < 15000 && !me.tried['o' + o.id + o.seed]);
+  if (offer){
+    me.tried['o' + offer.id + offer.seed] = 1;
+    await db.doc('lobby/' + uid).set(me4lobby({match:offer.id}));
+    for (let i = 0; i < 12 && mm === me && me.on; i++){
+      await sleep(700);
+      const s = await db.doc('duel/' + offer.id).get().catch(() => null);
+      const d = s && s.exists ? s.data() : null;
+      if (!d || d.guest !== uid || d.seed !== offer.seed || d.state === 'cancel') break;
+      if (d.state === 'go') return beginDuel(me, {host:offer.id, opp:offer.id, nick:d.hostNick, av:d.hostAv, seed:d.seed});
+    }
+    if (mm === me && me.on) await db.doc('lobby/' + uid).set(me4lobby()).catch(() => {});
+    return;
+  }
+  // 2. who else is looking right now?
+  const snap = await db.collection('lobby').where('want', '==', true).get();
+  if (mm !== me || !me.on) return;
+  const others = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(o => o.id !== uid && Math.abs(now - num(o.t)) < LOBBY_FRESH);
+  me.n = others.length;
+  duelScreen(tr('duelSearch'), others.length ? tr('duelWaiting', {n:others.length}) : tr('duelD'));
+  // 3. make an offer to one of them (only to bigger ids, the others will offer to me)
+  const cands = others.filter(o => o.id > uid && !o.match && !(me.tried['h' + o.id] > now));
+  if (!cands.length) return;
+  cands.sort((a, b) => Math.abs(num(a.rank) - myRank()) - Math.abs(num(b.rank) - myRank()));
+  const g = cands[0], seed = 1 + Math.floor(Math.random() * 2e9);
+  me.tried['h' + g.id] = now + 20000;
+  await db.doc('duel/' + uid).set({host:uid, guest:g.id, seed, state:'offer', t:Date.now(), hostNick:save.nick, hostAv:save.avatar, guestNick:String(g.nick || ''), guestAv:String(g.avatar || '')});
+  for (let i = 0; i < 10 && mm === me && me.on; i++){
+    await sleep(700);
+    const s = await db.doc('lobby/' + g.id).get().catch(() => null);
+    const d = s && s.exists ? s.data() : null;
+    if (d && d.match === uid){
+      await db.doc('duel/' + uid).update({state:'go', t:Date.now()});
+      return beginDuel(me, {host:uid, opp:g.id, nick:g.nick, av:g.avatar, seed});
+    }
+  }
+  await db.doc('duel/' + uid).update({state:'cancel'}).catch(() => {});
+}
+// stop looking for a match (leaving the search screen)
+function stopMatch(){
+  if (!mm) return;
+  const me = mm; mm = null; me.on = false;
+  clearInterval(me.hb); clearInterval(me.tick);
+  if (db && uid && !me.begun) db.doc('lobby/' + uid).set(me4lobby({want:false})).catch(() => {});
+}
+function beginDuel(me, o){
+  if (mm !== me) return;
+  me.begun = true; stopMatch();
+  db.doc('lobby/' + uid).set(me4lobby({want:false})).catch(() => {});
+  const roll = rollDuel(o.seed), sh = SHIPS[roll.ship];
+  duel = {id:o.host + ':' + o.seed, host:o.host, opp:o.opp, oppNick:String(o.nick || '?').slice(0, 16), oppAv:String(o.av || '👾').slice(0, 4), seed:o.seed,
+    ship:roll.ship, abils:roll.abils, el:0, oppLast:0, gotFirst:false, over:false, opS:0, opL:3, timers:[], unsub:null, startT:0, diedT:0};
+  jingle([523,659,784,1047]);
+  $('duelScreen').classList.add('found');
+  $('duelCancel').hidden = true;
+  $('duelAv').textContent = duel.oppAv;
+  const pw = roll.abils.map(id => { const a = ABILS.find(x => x.id === id); return `<span style="color:${a.c}">${a.icon} ${esc(L(a.n))}</span>`; }).join(' · ');
+  duelScreen(tr('duelFound', {nick:duel.oppNick}), tr('duelRoll'),
+    `<div class="roll"><b style="color:${sh.color}">🚀 ${esc(L(sh.n))}</b><small>${esc(L(sh.d))}</small><div>${pw}</div></div>`);
+  const d = duel;
+  setTimeout(() => { if (duel === d && curScreen === 'duel') start({mode:'duel', level:3}); }, 3200);
+}
+// the match itself: send my status every second, listen to the other player's
+function duelGo(){
+  const d = duel; if (!d) return;
+  duelRes = null; d.startT = Date.now(); d.el = 0;
+  const send = extra => db.doc('duelp/' + uid).set({duel:d.id, nick:save.nick, score:Math.floor(score), lives:Math.max(0, lives), level, alive:d.diedT === 0, el:Math.round(d.el * 10) / 10, t:Date.now(), done:false, winner:'', why:'', ...extra}).catch(() => {});
+  d.send = send;
+  send();
+  d.timers.push(setInterval(() => {
+    if (duel !== d || d.over) return;
+    if (state !== 'pause') send(); // a paused player stops reporting, so pausing too long loses the match
+    const quiet = Date.now() - (d.oppLast || d.startT);
+    if (quiet > (d.gotFirst ? 20000 : 30000)) finishDuel(true, 'left');
+    duelBar();
+  }, 1000));
+  const read = s => { if (s && s.exists) gotOpp(s.data()); };
+  try { d.unsub = db.doc('duelp/' + d.opp).onSnapshot(read, () => {}); } catch(e){}
+  d.timers.push(setInterval(() => { if (duel === d && !d.over) db.doc('duelp/' + d.opp).get().then(read).catch(() => {}); }, 2500));
+  duelBar();
+}
+function gotOpp(o){
+  const d = duel;
+  if (!d || d.over || !o || o.duel !== d.id) return;
+  if (num(o.t) !== d.lastT){ d.lastT = num(o.t); d.oppLast = Date.now(); d.gotFirst = true; }
+  d.opS = num(o.score); d.opL = num(o.lives);
+  if (o.done) return finishDuel(o.winner === uid, o.winner === uid ? (o.why === 'quit' || o.why === 'left' ? 'left' : 'win') : 'lose');
+  if (o.alive === false){
+    if (d.diedT === 0) return finishDuel(true, 'win');
+    // we both fell: whoever lasted longer wins (then score, then a coin toss everyone agrees on)
+    const mine = [d.el, score], theirs = [num(o.el), num(o.score)];
+    const win = mine[0] !== theirs[0] ? mine[0] > theirs[0] : mine[1] !== theirs[1] ? mine[1] > theirs[1] : uid < d.opp;
+    finishDuel(win, win ? 'win' : 'lose');
+  }
+  duelBar();
+}
+function duelDied(){
+  const d = duel; if (!d || d.over) return gameOver();
+  d.diedT = Date.now(); state = 'wait';
+  boom(ship.x, ship.y, 60, S.color, 260); flash = .6;
+  floatText(W/2, H*.45, tr('duelWaitT'), '#ffe066', 22);
+  d.send({alive:false});
+  // if the other player says nothing for a while, they lost the connection: count it as their loss of the race
+  setTimeout(() => { if (duel === d && !d.over) finishDuel(Date.now() - d.oppLast > 15000, 'lose'); }, 9000);
+}
+function finishDuel(win, why){
+  const d = duel; if (!d || d.over) return;
+  d.over = true;
+  if (why === 'lose' && win) why = 'left';
+  duelRes = {win, why, nick:d.oppNick};
+  const msg = {done:true, winner:win ? uid : d.opp, why:why === 'quit' ? 'quit' : why, alive:d.diedT === 0 && why !== 'quit'};
+  if (d.send){ d.send(msg); setTimeout(() => d.send(msg), 1500); setTimeout(() => d.send(msg), 4000); }
+  if (win){ save.duel.w++; trophy('duelWin'); jingle([523,659,784,1047,1319,1568]); } else save.duel.l++;
+  if (state === 'play' || state === 'pause' || state === 'wait'){ closeModal(); gameOver(); }
+  else persist();
+  setTimeout(() => stopDuel(d), 4500);
+}
+function stopDuel(d = duel){
+  if (!d) return;
+  d.timers.forEach(clearInterval); d.timers = [];
+  try { if (typeof d.unsub === 'function') d.unsub(); } catch(e){}
+}
+function duelBar(){
+  const b = $('duelBar'), d = duel;
+  if (!b) return;
+  const on = gmode === 'duel' && d && state !== 'over';
+  b.hidden = !on;
+  if (on){ const h = `<bdi>⚔️ ${esc(d.oppAv)}</bdi> <bdi>${esc(d.oppNick)}</bdi> <bdi>${d.opL > 0 ? '♥×' + d.opL : '💥'}</bdi> · <bdi>${fmt(d.opS)}</bdi>`; if (b.innerHTML !== h) b.innerHTML = h; }
+}
+$('duelCancel').onclick = () => { click(); stopMatch(); goHome(); };
+
+
 function loop(t){
   const dt = Math.min(.05, (t - t0)/1000 || 0); t0 = t;
-  if (state === 'play') update(dt);
+  if (state === 'play') (gmode === 'run' ? updateRun : update)(dt);
   else if (state === 'menu') updateDemo(dt);
   if (state !== 'pause') updateFx(dt);
-  draw(t);
+  if (gmode === 'run' && run && state !== 'menu') drawRun(t); else draw(t);
   requestAnimationFrame(loop);
 }
 applySettings(); applyLang();
