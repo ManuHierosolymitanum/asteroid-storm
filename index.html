@@ -934,6 +934,7 @@ const ABILS = [
 ];
 const RANKS = [['טירון','Rookie'],['צוער','Cadet'],['טייס','Pilot'],['טייס בכיר','Senior Pilot'],['סגן','Lieutenant'],['סרן','Captain'],['רב־סרן','Major'],['סגן־אלוף','Lt. Colonel'],['אלוף משנה','Colonel'],['תת־אלוף','Brigadier'],['אלוף','General'],['אלוף החלל','Space General'],['מפקד הגלקסיה','Galaxy Commander'],['שומר הכוכבים','Star Guardian'],['אגדת היקום','Universe Legend']];
 const SLOT2_RANK = 3, SLOT3_RANK = 10;
+const XP_DIV = 20; // rank-ups are meant to be rare: a game gives 20 times less XP than it used to
 const needXp = r => 50 * (r - 1) * r;
 const rankOf = xp => { let r = 1; while (xp >= needXp(r + 1)) r++; return r; };
 const rankName = r => L(RANKS[Math.min(r, RANKS.length) - 1]) + (r > RANKS.length ? ` ${r - RANKS.length + 1}` : '');
@@ -2298,7 +2299,7 @@ function bank(){
   save.coins += got; save.gems += gameGems + extra.g;
   if (gmode === 'classic' && score > save.best) save.best = score;
   if (gmode === 'classic') save.stats.maxLevel = Math.max(save.stats.maxLevel, level);
-  const fromXp = save.xp, xp = Math.floor(score / 30) + (level - 1) * 15 + bossesBeaten * 150 + extra.x;
+  const fromXp = save.xp, xp = Math.floor((score / 30 + (level - 1) * 15 + bossesBeaten * 150 + extra.x) / XP_DIV);
   save.xp += xp;
   const r0 = rankOf(fromXp), r1 = rankOf(save.xp), unlocked = [];
   for (let r = r0 + 1; r <= r1; r++) unlocked.push(...unlocksAt(r));
