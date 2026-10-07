@@ -3235,7 +3235,7 @@ const RUN_TIMED = ['ghost','magnet','turbo','slow','double','shrink'];
 let run = null, runObs = [], runOrbs = [], runDrag = null;
 const zoneOf = n => ZONES[(n - 1) % ZONES.length];
 function runInit(){
-  run = {x:W/2, vx:0, dist:0, zone:1, gap:260, gapFull:260, mid:false, orbs:0, combo:0, comboT:0, breath:0, t:0, grid:0, speed:0, shield:false, tip:0};
+  run = {x:W/2, lastX:W/2, lastY:H * .8, vx:0, dist:0, zone:1, gap:260, gapFull:260, mid:false, orbs:0, combo:0, comboT:0, breath:0, t:0, grid:0, speed:0, shield:false, tip:0};
   for (const k of RUN_TIMED) run[k] = 0;
   runObs = []; runOrbs = []; runDrag = null; bombs = 0;
   ship = {x:W/2, y:H*.8, vx:0, vy:0, a:-Math.PI/2, r:13, inv:2, thrust:true};
@@ -3258,17 +3258,22 @@ function runSpawnObstacle(){
   if (z >= 5) kinds.push('spin');
   const k = kinds[Math.floor(Math.random() * kinds.length)];
   const gw = runGapW(), y = -40;
+  // fairness: the next opening must be reachable in the time it takes to fly there (with time to react)
+  const secs = (run.lastY - y) / Math.max(1, runBase() * 1.3), reach = Math.max(40, 360 * (secs - .2));
+  const amp = k === 'gate' ? Math.min(W * .22, 120, reach * .35) : 0;
+  const near = (half, lo = half + 10, hi = W - half - 10) => { const c = run.lastX ?? W/2, m = Math.max(0, reach - amp), a = Math.max(lo, c - m), b = Math.min(hi, c + m); return a <= b ? rnd(a, b) : Math.max(lo, Math.min(hi, c)); };
   let o;
-  if (k === 'wall' || k === 'gate'){ const gx = rnd(gw/2 + 10, W - gw/2 - 10); o = {k, y, h:16, gx, gx2:gx, gw, ph:rnd(0, TAU), amp:k === 'gate' ? Math.min(W * .22, 120) : 0}; }
-  else if (k === 'closer') o = {k, y, h:16, cx:rnd(W * .3, W * .7), gw:Math.min(W * .5, 240), min:58, ph:rnd(0, TAU)};
-  else if (k === 'laser') o = {k, y, h:6, ph:rnd(0, 2), per:Math.max(1.5, 2.4 - z * .08)};
+  if (k === 'wall' || k === 'gate'){ const gx = near(gw/2 + amp); o = {k, y, h:16, gx, gx2:gx, gw, ph:rnd(0, TAU), amp}; }
+  else if (k === 'closer') o = {k, y, h:16, cx:near(0, W * .3, W * .7), gw:Math.min(W * .5, 240), min:58, ph:rnd(0, TAU)};
+  else if (k === 'laser'){ const lw = Math.max(110, gw); o = {k, y, h:6, gx:near(lw/2), gw:lw, ph:rnd(0, 2), per:Math.max(1.5, 2.4 - z * .08)}; }
   else if (k === 'mine') o = {k, y, x:rnd(30, W - 30), r:15, vx:rnd(50, 110) * (Math.random() < .5 ? -1 : 1), rot:0};
   else if (k === 'meteor') o = {k, y:y - 60, x:rnd(40, W - 40), r:14, vx:rnd(-90, 90), fall:rnd(90, 160), rot:0};
   else if (k === 'blocks'){ const bw = Math.min(W * .28, 150); o = {k, y, h:22, bw, x1:rnd(0, W - bw), v:rnd(110, 180)}; }
   else o = {k, y, x:W/2 + rnd(-W*.15, W*.15), len:Math.min(W * .4, 220), a:rnd(0, TAU), va:rnd(1.2, 2) * (Math.random() < .5 ? -1 : 1)};
   runObs.push(o);
+  if (o.gw){ run.lastX = gapX(o); run.lastY = o.y; }
   // reward for threading the opening: orbs sit right in the gap (and move with it); sometimes a diamond
-  if (k === 'wall' || k === 'gate' || k === 'closer'){
+  if (o.gw){
     if (z >= 2 && Math.random() < .14) runOrbs.push({x:gapX(o), y:o.y, r:11, gem:true, follow:o, t:0});
     else runOrbs.push({x:gapX(o), y:o.y - 26, r:7, follow:o, t:0}, {x:gapX(o), y:o.y + 26, r:7, follow:o, t:1});
   }
@@ -3349,10 +3354,11 @@ function updateRun(dt){
   run.gap -= dy;
   if (!run.mid && run.gap <= run.gapFull / 2){ run.mid = true; runSpawnMid(); }
   if (run.gap <= 0){
-    run.gapFull = runSpacing() + rnd(0, 60); run.gap = run.gapFull; run.mid = false;
+    run.gapFull = Math.max(runSpacing(), runBase() * .75) + rnd(0, 60); run.gap = run.gapFull; run.mid = false;
     if (run.breath > 0) runRow(-40, rnd(90, W - 90), 'arc'); else runSpawnObstacle();
   }
   // obstacles
+  run.lastY += dy;
   for (const o of runObs){
     o.y += dy;
     if (o.k === 'gate') o.gx2 = Math.max(o.gw/2 + 6, Math.min(W - o.gw/2 - 6, o.gx + Math.sin(run.t * 1.6 + o.ph) * o.amp));
@@ -3372,7 +3378,7 @@ function updateRun(dt){
       }
     } else if (o.k === 'laser'){
       o.on = ((run.t + o.ph) % o.per) < o.per * .45;
-      if (o.on && Math.abs(o.y - ship.y) < r + 3) hit = true;
+      if (o.on && Math.abs(o.y - ship.y) < r + 3 && !(ship.x - r > o.gx - o.gw/2 && ship.x + r < o.gx + o.gw/2)) hit = true;
     } else if (o.k === 'mine' || o.k === 'meteor'){
       if (Math.hypot(o.x - ship.x, o.y - ship.y) < o.r + r) hit = true;
     } else if (o.k === 'blocks'){
@@ -3467,10 +3473,10 @@ function drawRun(t){
       ctx.fillRect(0, o.y - o.h/2, gx - gw/2, o.h); ctx.fillRect(gx + gw/2, o.y - o.h/2, W - gx - gw/2, o.h);
       ctx.fillStyle = '#fff'; ctx.globalAlpha = .7; ctx.fillRect(0, o.y - 1.5, gx - gw/2, 3); ctx.fillRect(gx + gw/2, o.y - 1.5, W - gx - gw/2, 3); ctx.globalAlpha = 1;
     } else if (o.k === 'laser'){
-      const on = ((run.t + o.ph) % o.per) < o.per * .45;
-      if (on){ glow('#ff3d6e', 24); ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 4, W, 8); ctx.fillStyle = '#fff'; ctx.fillRect(0, o.y - 1.5, W, 3); }
-      else { ctx.strokeStyle = '#ff3d6e'; ctx.globalAlpha = .45; ctx.setLineDash([8, 10]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, o.y); ctx.lineTo(W, o.y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
-      ctx.shadowBlur = 0; ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 10, 10, 20); ctx.fillRect(W - 10, o.y - 10, 10, 20);
+      const on = ((run.t + o.ph) % o.per) < o.per * .45, a = o.gx - o.gw/2, b2 = o.gx + o.gw/2;
+      if (on){ glow('#ff3d6e', 24); ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 4, a, 8); ctx.fillRect(b2, o.y - 4, W - b2, 8); ctx.fillStyle = '#fff'; ctx.fillRect(0, o.y - 1.5, a, 3); ctx.fillRect(b2, o.y - 1.5, W - b2, 3); }
+      else { ctx.strokeStyle = '#ff3d6e'; ctx.globalAlpha = .45; ctx.setLineDash([8, 10]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, o.y); ctx.lineTo(a, o.y); ctx.moveTo(b2, o.y); ctx.lineTo(W, o.y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+      ctx.shadowBlur = 0; ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 10, 10, 20); ctx.fillRect(W - 10, o.y - 10, 10, 20); ctx.fillRect(a - 8, o.y - 9, 8, 18); ctx.fillRect(b2, o.y - 9, 8, 18);
     } else if (o.k === 'mine'){
       ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot); glow('#ff9f43', 16); ctx.fillStyle = '#3a1200'; ctx.strokeStyle = '#ff9f43'; ctx.lineWidth = 2.5;
       ctx.beginPath(); for (let i = 0; i < 16; i++){ const a = i / 16 * TAU, rr = i % 2 ? o.r * .62 : o.r * 1.15; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke();
