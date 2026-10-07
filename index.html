@@ -781,7 +781,7 @@ he:{
   runB:'מרוץ ניאון', runQ:'🌀 מרוץ ניאון', runD:'משחק אחר לגמרי! טסים קדימה במנהרת ניאון, מתחמקים מקירות, לייזרים, מטאורים ומוקשים ואוספים כדורי אנרגיה ברצף בשביל קומבו. יש 7 כוחות, משטחי בוסט ויהלומים בתוך הפתחים. מתחילים לאט, וכל 120 מטר יש אזור חדש, מהיר וקשה יותר. כמה רחוק תגיע?',
   runKeys:'חצים ימינה ושמאלה כדי לזוז · למעלה לטורבו · למטה כדי להאט', runTouch:'תגרור את האצבע ימינה ושמאלה · ▲ לטורבו', runGo:'לטוס!',
   runSub:'תתחמק ותאסוף אנרגיה!', runZone:'אזור {n}', runFaster:'יותר מהר!', runNear:'כמעט! +{n}',
-  run_ghost:'👻 רוח רפאים!', run_magnet:'🧲 מגנט!', run_turbo:'🚀 טורבו!', run_shield:'🛡 מגן!',
+  run_blast:'🔫 בלאסטר! יורה על מכשולים', runSmash:'💥 +{n}', runEnding:'⚠ {p} נגמר עוד רגע!', runTiming:'⚡ תזמון מושלם! +{n}',  run_magnet:'🧲 מגנט!', run_turbo:'🚀 טורבו! מרסק הכול', run_shield:'🛡 מגן!',
   runInfo:'טסת {m} מטר והגעת לאזור {s}', runNewBest:'שיא מרחק חדש! 🎉', runYourBest:'השיא שלך: {m} מטר', runBestS:'שיא: {m} מ׳', meters:'מ׳',
   duelB:'1 על 1', duelT:'⚔️ קרב 1 על 1', duelD:'מחפש שחקן מכל העולם שגם לחץ על 1 על 1...', duelSearch:'מחפש יריב...',
   duelWaiting:'עוד {n} שחקנים מחפשים עכשיו', duelCancel:'ביטול', duelFound:'נמצא יריב: {nick}!', duelRoll:'המשחק הגריל לשניכם את אותה חללית ואותם כוחות:',
@@ -886,7 +886,7 @@ en:{
   runB:'Neon Rush', runQ:'🌀 Neon Rush', runD:'A totally different game! Fly forward through a neon tunnel, dodge walls, lasers, meteors and mines, and grab energy orbs in a row for combos. There are 7 power-ups, boost pads and diamonds hidden in the openings. It starts slow, and every 120 m is a new zone, faster and harder. How far can you go?',
   runKeys:'Left and right arrows to move · Up for turbo · Down to slow down', runTouch:'Drag your finger left and right · ▲ for turbo', runGo:'Fly!',
   runSub:'Dodge and grab energy!', runZone:'Zone {n}', runFaster:'Faster!', runNear:'Close call! +{n}',
-  run_ghost:'👻 Ghost!', run_magnet:'🧲 Magnet!', run_turbo:'🚀 Turbo!', run_shield:'🛡 Shield!',
+  run_blast:'🔫 Blaster! Shoots obstacles', runSmash:'💥 +{n}', runEnding:'⚠ {p} is running out!', runTiming:'⚡ Perfect timing! +{n}',  run_magnet:'🧲 Magnet!', run_turbo:'🚀 Turbo! Smashes through', run_shield:'🛡 Shield!',
   runInfo:'You flew {m} m and reached zone {s}', runNewBest:'New distance record! 🎉', runYourBest:'Your best: {m} m', runBestS:'Best: {m} m', meters:'m',
   duelB:'1v1', duelT:'⚔️ 1v1 battle', duelD:'Looking for a player anywhere in the world who also pressed 1v1...', duelSearch:'Searching...',
   duelWaiting:'{n} other players are searching now', duelCancel:'Cancel', duelFound:'Opponent found: {nick}!', duelRoll:'You both got the same random ship and powers:',
@@ -3225,7 +3225,7 @@ const ZONES = [
 ];
 const ZONE_LEN = 600;
 const RUN_POW = {
-  ghost: {c:'#c9a0ff', icon:'👻', t:4},
+  blast: {c:'#ff5d73', icon:'🔫', t:5},
   magnet:{c:'#b0ffea', icon:'🧲', t:8},
   turbo: {c:'#ffe066', icon:'🚀', t:3},
   shield:{c:'#6ecbff', icon:'🛡', t:0},
@@ -3233,14 +3233,14 @@ const RUN_POW = {
   double:{c:'#ff9f43', icon:'✖2', t:8},
   shrink:{c:'#ff8de0', icon:'🔹', t:7},
 };
-const RUN_TIMED = ['ghost','magnet','turbo','slow','double','shrink'];
-let run = null, runObs = [], runOrbs = [], runDrag = null;
+const RUN_TIMED = ['blast','magnet','turbo','slow','double','shrink'];
+let run = null, runObs = [], runOrbs = [], runShots = [], runDrag = null;
 const runM = () => Math.floor(run.dist / 5); // meters shown to the player (5 times slower than the internal distance)
 const zoneOf = n => ZONES[(n - 1) % ZONES.length];
 function runInit(){
   run = {x:W/2, lastX:W/2, lastY:H * .8, vx:0, dist:0, zone:1, gap:260, gapFull:260, mid:false, orbs:0, combo:0, comboT:0, breath:0, t:0, grid:0, speed:0, shield:false, tip:0};
   for (const k of RUN_TIMED) run[k] = 0;
-  runObs = []; runOrbs = []; runDrag = null; bombs = 0;
+  runObs = []; runOrbs = []; runShots = []; runDrag = null; bombs = 0;
   ship = {x:W/2, y:H*.8, vx:0, vy:0, a:-Math.PI/2, r:13, inv:2, thrust:true};
   banner = {t:2.8, title:tr('runZone', {n:1}) + ' · ' + L(ZONES[0].n), sub:tr('runSub'), boss:false};
   runRow(-60, W/2, 'row'); runRow(-200, W/2, 'arc');
@@ -3279,6 +3279,11 @@ function runSpawnObstacle(){
   if (o.gw){
     if (z >= 2 && Math.random() < .14) runOrbs.push({x:gapX(o), y:o.y, r:11, gem:true, follow:o, t:0});
     else runOrbs.push({x:gapX(o), y:o.y - 26, r:7, follow:o, t:0}, {x:gapX(o), y:o.y + 26, r:7, follow:o, t:1});
+    if (o.k === 'laser'){
+      // bonus on the beam itself, away from the opening: grab it only by flying through while the laser is off
+      const side = o.gx > W/2 ? -1 : 1, bx = o.gx + side * (o.gw/2 + Math.min(120, W * .15));
+      if (bx > 20 && bx < W - 20){ if (Math.random() < .3) runOrbs.push({x:bx, y:o.y, r:11, gem:true, t:0}); else for (let i = -1; i <= 1; i++) runOrbs.push({x:bx + i * 26, y:o.y, r:7, t:i}); }
+    }
   }
 }
 // orbs placed in the empty space halfway between two obstacles, never on top of something dangerous
@@ -3309,7 +3314,7 @@ function runSpawnMid(){
 const segDist = (px, py, ax, ay, bx, by) => { const dx = bx-ax, dy = by-ay, l = dx*dx + dy*dy || 1, t = Math.max(0, Math.min(1, ((px-ax)*dx + (py-ay)*dy) / l)); return Math.hypot(px - ax - t*dx, py - ay - t*dy); };
 const runMult = () => Math.min(5, 1 + Math.floor(run.combo / 10)) * (run.double > 0 ? 2 : 1);
 function runHit(){
-  if (ship.inv > 0 || run.ghost > 0 || run.turbo > 0) return false;
+  if (ship.inv > 0 || run.turbo > 0) return false;
   if (run.combo >= 10) floatText(ship.x, ship.y - 54, tr('runComboLost'), '#ff9fb0', 14);
   run.combo = 0;
   if (run.shield){ run.shield = false; ship.inv = 1.2; ring(ship.x, ship.y, RUN_POW.shield.c, 90, 320); beep(300,.3,'triangle',.08,-150); floatText(ship.x, ship.y - 30, tr('shieldSaved'), RUN_POW.shield.c, 16); return true; }
@@ -3318,6 +3323,13 @@ function runHit(){
   if (lives <= 0){ updateHud(); gameOver(); return true; }
   floatText(ship.x, ship.y - 36, lives === 1 ? tr('lastLife') : tr('ouch', {n:lives}), '#ff5d73', 18);
   return true;
+}
+function runSmash(o, x){
+  o.dead = true; o.done = true;
+  const n = 40 * run.zone * runMult(); score += n;
+  const bx = o.x ?? x, c = o.k === 'mine' || o.k === 'meteor' ? '#ff9f43' : zoneOf(run.zone).a;
+  boom(bx, o.y, 30, c, 260); ring(bx, o.y, c, 80, 320); shake = Math.max(shake, 6); noise(.25, .1);
+  floatText(bx, o.y - 10, tr('runSmash', {n}), c, 16);
 }
 function updateRun(dt){
   save.stats.time += dt; run.t += dt;
@@ -3335,7 +3347,24 @@ function updateRun(dt){
   ship.x = Math.max(ship.r + 4, Math.min(W - ship.r - 4, ship.x + run.vx * dt)); ship.y = runY();
   ship.a = -Math.PI/2 + Math.max(-.35, Math.min(.35, run.vx / 1600));
   if (ship.inv > 0) ship.inv -= dt;
-  for (const k of RUN_TIMED) if (run[k] > 0) run[k] -= dt;
+  for (const k of RUN_TIMED) if (run[k] > 0){
+    const was = run[k]; run[k] -= dt;
+    if (was > 2 && run[k] <= 2){ floatText(ship.x, ship.y - 60, tr('runEnding', {p:RUN_POW[k].icon}), '#ff9fb0', 16); beep(880,.09,'square',.05); beep(660,.09,'square',.05,0,.15); }
+  }
+  // blaster: shoot obstacles in front of you
+  if (run.blast > 0){ run.blastCd = (run.blastCd || 0) - dt; if (run.blastCd <= 0){ run.blastCd = .16; runShots.push({x:ship.x - 7, y:ship.y - 14}, {x:ship.x + 7, y:ship.y - 14}); beep(1200,.04,'square',.025,-500); } }
+  for (const sh of runShots){
+    sh.y -= 1100 * dt;
+    for (const o of runObs){
+      if (o.dead || sh.gone) continue;
+      let h = false;
+      if (o.gw || o.k === 'blocks') h = Math.abs(o.y - sh.y) < 14;
+      else if (o.k === 'mine' || o.k === 'meteor') h = Math.hypot(o.x - sh.x, o.y - sh.y) < o.r + 6;
+      else if (o.k === 'spin'){ const cx = Math.cos(o.a) * o.len/2, cy = Math.sin(o.a) * o.len/2; h = segDist(sh.x, sh.y, o.x - cx, o.y - cy, o.x + cx, o.y + cy) < 9; }
+      if (h){ sh.gone = true; runSmash(o, sh.x); }
+    }
+  }
+  runShots = runShots.filter(sh => !sh.gone && sh.y > -30);
   if (run.breath > 0) run.breath -= dt;
   // engine trail
   for (let i = 0; i < (run.turbo > 0 ? 4 : 2); i++) parts.push({x:ship.x + rnd(-5,5), y:ship.y + 16, vx:rnd(-30,30), vy:rnd(200,320), life:.35, color:Math.random() < .5 ? zoneOf(run.zone).a : '#ffe066', size:3});
@@ -3381,7 +3410,8 @@ function updateRun(dt){
       }
     } else if (o.k === 'laser'){
       o.on = ((run.t + o.ph) % o.per) < o.per * .45;
-      if (o.on && Math.abs(o.y - ship.y) < r + 3 && !(ship.x - r > o.gx - o.gw/2 && ship.x + r < o.gx + o.gw/2)) hit = true;
+      const out = !(ship.x - r > o.gx - o.gw/2 && ship.x + r < o.gx + o.gw/2);
+      if (Math.abs(o.y - ship.y) < r + 3 && out){ if (o.on) hit = true; else o.sneak = true; }
     } else if (o.k === 'mine' || o.k === 'meteor'){
       if (Math.hypot(o.x - ship.x, o.y - ship.y) < o.r + r) hit = true;
     } else if (o.k === 'blocks'){
@@ -3391,13 +3421,15 @@ function updateRun(dt){
       const cx = Math.cos(o.a) * o.len/2, cy = Math.sin(o.a) * o.len/2;
       if (segDist(ship.x, ship.y, o.x - cx, o.y - cy, o.x + cx, o.y + cy) < r + 5) hit = true;
     }
-    if (hit && runHit()){ o.done = true; continue; }
+    if (hit && run.turbo > 0){ runSmash(o, ship.x); continue; }
+    if (hit && runHit()){ o.done = true; o.sneak = false; continue; }
     if (o.y > ship.y + 30){
       o.done = true;
+      if (o.sneak){ const n = 150 * run.zone * runMult(); score += n; floatText(ship.x, ship.y - 48, tr('runTiming', {n}), '#ff8de0', 17); jingle([784,1047,1319]); }
       if (near && ship.inv <= 0){ const n = 50 * run.zone * runMult(); score += n; floatText(ship.x, ship.y - 34, tr('runNear', {n}), '#8dff9a', 16); beep(1500,.08,'triangle',.04,400); }
     }
   }
-  runObs = runObs.filter(o => o.y < H + 80);
+  runObs = runObs.filter(o => !o.dead && o.y < H + 80);
   // orbs, diamonds, power-ups and boost pads
   if (run.comboT > 0){ run.comboT -= dt; if (run.comboT <= 0) run.combo = 0; }
   for (const b of runOrbs){
@@ -3478,7 +3510,7 @@ function drawRun(t){
     } else if (o.k === 'laser'){
       const on = ((run.t + o.ph) % o.per) < o.per * .45, a = o.gx - o.gw/2, b2 = o.gx + o.gw/2;
       if (on){ glow('#ff3d6e', 24); ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 4, a, 8); ctx.fillRect(b2, o.y - 4, W - b2, 8); ctx.fillStyle = '#fff'; ctx.fillRect(0, o.y - 1.5, a, 3); ctx.fillRect(b2, o.y - 1.5, W - b2, 3); }
-      else { ctx.strokeStyle = '#ff3d6e'; ctx.globalAlpha = .45; ctx.setLineDash([8, 10]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, o.y); ctx.lineTo(a, o.y); ctx.moveTo(b2, o.y); ctx.lineTo(W, o.y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+      else { const soon = ((run.t + o.ph) % o.per) > o.per - .45; ctx.strokeStyle = '#ff3d6e'; ctx.globalAlpha = soon ? (Math.floor(t / 70) % 2 ? .95 : .3) : .45; ctx.setLineDash(soon ? [] : [8, 10]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, o.y); ctx.lineTo(a, o.y); ctx.moveTo(b2, o.y); ctx.lineTo(W, o.y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
       ctx.shadowBlur = 0; ctx.fillStyle = '#ff3d6e'; ctx.fillRect(0, o.y - 10, 10, 20); ctx.fillRect(W - 10, o.y - 10, 10, 20); ctx.fillRect(a - 8, o.y - 9, 8, 18); ctx.fillRect(b2, o.y - 9, 8, 18);
     } else if (o.k === 'mine'){
       ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot); glow('#ff9f43', 16); ctx.fillStyle = '#3a1200'; ctx.strokeStyle = '#ff9f43'; ctx.lineWidth = 2.5;
@@ -3522,15 +3554,17 @@ function drawRun(t){
   // the ship
   if (state !== 'over' && !(ship.inv > 0 && Math.floor(t/100) % 2)){
     const [sc, sb] = shipLook(S);
-    if (run.ghost > 0) ctx.globalAlpha = .45 + Math.sin(t / 60) * .15;
-    if (run.turbo > 0){ glow('#ffe066', 30); }
-    ctx.save(); ctx.translate(ship.x, ship.y); if (run.shrink > 0) ctx.scale(.55, .55);
+    const ending = k => run[k] > 0 && run[k] <= 2 && Math.floor(t / 130) % 2;
+    if (run.turbo > 0 && !ending('turbo')){ glow('#ffe066', 30); }
+    ctx.save(); ctx.translate(ship.x, ship.y); if (run.shrink > 0) ctx.scale(ending('shrink') ? .8 : .55, ending('shrink') ? .8 : .55);
     drawShipShape(0, 0, ship.a, sc, sb, true, SHIPS.indexOf(S));
     ctx.restore();
     ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     if (run.shield){ ctx.strokeStyle = RUN_POW.shield.c; ctx.globalAlpha = .8; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ship.x, ship.y, ship.r + 11 + Math.sin(t/120) * 1.5, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
-    if (run.magnet > 0){ ctx.strokeStyle = RUN_POW.magnet.c; ctx.globalAlpha = .25; ctx.setLineDash([4,8]); ctx.beginPath(); ctx.arc(ship.x, ship.y, 60 + (t/20) % 40, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+    if (run.magnet > 0 && !ending('magnet')){ ctx.strokeStyle = RUN_POW.magnet.c; ctx.globalAlpha = .25; ctx.setLineDash([4,8]); ctx.beginPath(); ctx.arc(ship.x, ship.y, 60 + (t/20) % 40, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   }
+  for (const sh of runShots){ glow('#ff5d73', 12); ctx.fillStyle = '#ffd0d6'; ctx.fillRect(sh.x - 1.5, sh.y - 9, 3, 18); }
+  ctx.shadowBlur = 0;
   // speed lines while boosting
   if (run.turbo > 0 || keys.up){ ctx.strokeStyle = '#fff'; ctx.globalAlpha = .25; ctx.lineWidth = 1.5; for (let i = 0; i < 10; i++){ const x = (i * 97 + t * .7) % W, y = (i * 53 + t * 1.3) % H; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 40); ctx.stroke(); } ctx.globalAlpha = 1; }
   ctx.textAlign = 'center';
@@ -3549,7 +3583,7 @@ function drawRun(t){
   const m = runMult();
   if (m > 1 || run.combo > 0){ ctx.fillStyle = m > 1 ? '#ff8de0' : 'rgba(255,255,255,.55)'; ctx.fillText(`×${m}  ${'●'.repeat(run.combo % 10)}${'○'.repeat(10 - run.combo % 10)}`, W/2, H - 40); }
   const act = RUN_TIMED.filter(k => run[k] > 0);
-  act.forEach((k, i) => { ctx.fillStyle = RUN_POW[k].c; ctx.fillText(`${RUN_POW[k].icon} ${Math.ceil(run[k])}`, W/2 + (i - (act.length - 1) / 2) * 70, H - 16); });
+  act.forEach((k, i) => { ctx.fillStyle = run[k] <= 2 && Math.floor(t / 150) % 2 ? '#ff3d6e' : RUN_POW[k].c; ctx.fillText(`${RUN_POW[k].icon} ${Math.ceil(run[k])}`, W/2 + (i - (act.length - 1) / 2) * 70, H - 16); });
   ctx.restore();
   if (flash > 0 && save.settings.flash){ ctx.globalAlpha = flash * .5; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
 }
