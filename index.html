@@ -14,6 +14,80 @@
 <title>סופת אסטרואידים</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@400;700&display=swap">
+<script>
+// The website has no Claude behind it, so the game's window.claude.use('db' / 'user')
+// is answered by Firebase (loaded by the module below). No answer within 12s = play offline.
+(() => {
+  let done;
+  const ready = new Promise(r => { done = r; });
+  window.__fbDone = v => { if (done){ done(v); done = null; } };
+  setTimeout(() => window.__fbDone(null), 12000);
+  window.claude = {use: n => ready.then(api => api ? api.use(n) : null)};
+})();
+</script>
+<script type="module">
+const V = '10.12.2', base = 'https://www.gstatic.com/firebasejs/' + V + '/';
+try {
+  const [{initializeApp}, A, F] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+  const app = initializeApp({"apiKey": "AIzaSyBPgIc5-N6L91oIgSW-gHZvvEJbnb7EXRI", "authDomain": "asteroid-storm-d4ed7.firebaseapp.com", "projectId": "asteroid-storm-d4ed7", "storageBucket": "asteroid-storm-d4ed7.firebasestorage.app", "messagingSenderId": "389019859065", "appId": "1:389019859065:web:75e2a5f0ac32cc45c17ca8"});
+  const auth = A.getAuth(app), fs = F.getFirestore(app);
+  const emu = window.__FB_EMU; // set only by local tests
+  if (emu){ A.connectAuthEmulator(auth, 'http://127.0.0.1:9099', {disableWarnings:true}); F.connectFirestoreEmulator(fs, '127.0.0.1', 8085); }
+  await auth.authStateReady();
+  if (emu && emu.email) await A.signInWithEmailAndPassword(auth, emu.email, emu.pass);
+  if (!auth.currentUser) await A.signInAnonymously(auth);
+  const user = auth.currentUser;
+  // only the admin's account may read this doc (see firestore.rules), so a successful read = admin
+  let admin = false;
+  try { await F.getDoc(F.doc(fs, 'adminCheck/me')); admin = true; } catch(e){}
+  const wrap = s => ({id:s.id, exists:s.exists(), data:() => s.data()});
+  const doc = p => {
+    const r = F.doc(fs, p);
+    return {
+      get: async () => wrap(await F.getDoc(r)),
+      set: d => F.setDoc(r, d), update: d => F.updateDoc(r, d), delete: () => F.deleteDoc(r),
+      onSnapshot: (next, err) => F.onSnapshot(r, s => next(wrap(s)), err),
+    };
+  };
+  const coll = (p, w = [], o = null, l = null) => ({
+    where: (a, op, v) => coll(p, w.concat([[a, op, v]]), o, l),
+    orderBy: (a, d = 'asc') => coll(p, w, [a, d], l),
+    limit: n => coll(p, w, o, n),
+    doc: id => doc(p + '/' + id),
+    get: async () => {
+      // filtering on one field and sorting by another would need an index, so sort those here
+      const local = !!o && w.some(x => x[0] !== o[0]);
+      const parts = w.map(([a, op, v]) => F.where(a, op, v));
+      if (o && !local) parts.push(F.orderBy(o[0], o[1]));
+      if (l && !local) parts.push(F.limit(l));
+      const s = await F.getDocs(F.query(F.collection(fs, p), ...parts));
+      let docs = s.docs.map(wrap);
+      if (local){
+        docs.sort((a, b) => ((+b.data()[o[0]] || 0) - (+a.data()[o[0]] || 0)) * (o[1] === 'desc' ? 1 : -1));
+        if (l) docs = docs.slice(0, l);
+      }
+      return {docs, size:docs.length, empty:!docs.length};
+    },
+  });
+  const db = {doc, collection: p => coll(p)};
+  const usr = {id: async () => user.uid, isOwner: async () => admin, canEdit: async () => admin};
+  window.__fbAuth = {
+    // the admin signs in with Google; linking keeps this device's progress on the same account
+    signIn: async () => {
+      const prov = new A.GoogleAuthProvider();
+      try { await A.linkWithPopup(auth.currentUser, prov); }
+      catch(e){
+        const cred = A.GoogleAuthProvider.credentialFromError(e);
+        if (!cred) throw e;
+        await A.signInWithCredential(auth, cred);
+      }
+      location.reload();
+    },
+    signOut: async () => { await A.signOut(auth); location.reload(); },
+  };
+  window.__fbDone({use: n => n === 'db' ? db : n === 'user' ? usr : null});
+} catch(e){ window.__fbDone(null); }
+</script>
 </head>
 <body>
 <style>
@@ -472,6 +546,7 @@ body.touch .kh,body.touch .hud .hbtns kbd{display:none}
     <h2 data-t="settings"></h2>
     <div class="sets" id="setList"></div>
     <button class="btn small danger" id="resetBtn" type="button"><span data-t="reset"></span></button>
+    <button class="btn small admin" id="adminLogin" type="button" hidden></button>
     <button class="btn small" id="setBack" type="button"><span data-t="back"></span><kbd class="kh">Esc</kbd></button>
   </div>
 
@@ -729,12 +804,15 @@ en:{
   k_settings:'Settings', k_home:'Home', k_restart:'Restart (when paused)', k_resume:'Resume / play / play again', k_lb:'Leaderboards (after a game)', k_back:'Back', keysT:'⌨️ Computer keys',
   pubRank:'Rank {r} · {name}',
 }};
-// the website copy (installable app) has no Claude account behind it, so it saves on the device only
+// the website copy (installable app) saves online through Firebase instead of Claude;
+// with no internet it falls back to saving on the device only
 const WEB_BUILD = true;
 if (WEB_BUILD){
-  const he = 'בגרסת האפליקציה זה עדיין לא עובד. זה עובד בגרסה של המשחק ב-Claude.', en = 'This does not work in the app version yet. It works in the game\'s Claude version.';
-  Object.assign(TX.he, {lbOff:'בגרסת האפליקציה רואים רק את השיאים שלך:', recOff:he, msgOff:he, codeOff:he, aOffline:he, syncOff:'ההתקדמות נשמרת במכשיר הזה.'});
-  Object.assign(TX.en, {lbOff:'In the app version you see only your own records:', recOff:en, msgOff:en, codeOff:en, aOffline:en, syncOff:'Progress is saved on this device.'});
+  const he = 'זה עובד רק כשיש אינטרנט.', en = 'This works only when you are online.';
+  Object.assign(TX.he, {lbOff:'אין אינטרנט כרגע, אז רואים רק את השיאים שלך:', recOff:he, msgOff:he, codeOff:he, aOffline:he, syncOff:'אין חיבור, אז ההתקדמות נשמרת רק במכשיר הזה.',
+    syncOn:'ההתקדמות שלך נשמרת באינטרנט. כדי להיכנס אליה ממכשיר אחר, צור סיסמה כאן למטה.', aLogin:'👑 כניסת אדמין', aLogout:'👑 יציאה מחשבון האדמין', aLoginErr:'הכניסה לא הצליחה, נסה שוב'});
+  Object.assign(TX.en, {lbOff:'You are offline, so you see only your own records:', recOff:en, msgOff:en, codeOff:en, aOffline:en, syncOff:'Offline, so progress is saved on this device only.',
+    syncOn:'Your progress is saved online. To use it on another device, make a password below.', aLogin:'👑 Admin sign-in', aLogout:'👑 Sign out of admin', aLoginErr:'Sign-in failed, try again'});
 }
 let lang = 'he';
 const tr = (k, v) => { let s = TX[lang][k] ?? TX.he[k] ?? k; if (v) s = s.replace(/\{(\w+)\}/g, (m, n) => v[n] ?? m); return s; };
@@ -1132,7 +1210,6 @@ $('trophyBtn').onclick = () => { click(); show('trophies'); };
 $('helpBtn').onclick = () => { click(); show('help'); };
 $('adminBtn').onclick = () => { click(); admPid = null; show('admin'); };
 $('msgBtn').onclick = () => { click(); openMsgs(); };
-if (WEB_BUILD){ $('msgBtn').hidden = true; $('installBtn').style.gridColumn = '1/-1'; }
 try { if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) $('installBtn').hidden = true; } catch(e){}
 addEventListener('appinstalled', () => { $('installBtn').hidden = true; });
 // install: use the browser's own install prompt when it offers one, otherwise show how to add it
@@ -1571,7 +1648,7 @@ function gotMyMsgs(snap){
   const d = snap.exists ? snap.data() || {} : {};
   myMsgs = Array.isArray(d.items) ? d.items.filter(m => m && typeof m.text === 'string') : [];
   const lastA = myMsgs.filter(m => m.a).pop(), fresh = lastA && num(lastA.t) > msgSeen();
-  if ($('msgList')){ drawMyMsgs(); return; }
+  if ($('msgList') && modalOpen()){ drawMyMsgs(); return; }
   $('msgNb').hidden = !fresh;
   if (fresh && toldReply !== lastA.id){ toldReply = lastA.id; toast('👑', esc(tr('msgReplied')), esc(tr('msgReplyS'))); }
 }
@@ -1899,7 +1976,18 @@ const SETS = [
   {k:'size', type:'seg', opts:[['s','o_s'],['m','o_m'],['l','o_l']]},
 ];
 const getSet = k => k === 'lang' ? save.lang : save.settings[k];
+function renderAdminLogin(){
+  const b = $('adminLogin'), fa = window.__fbAuth;
+  // the sign-in button stays hidden from players; the admin opens the site with #admin once
+  b.hidden = !(WEB_BUILD && fa && (isAdmin || /admin/i.test(location.hash)));
+  if (!b.hidden) b.textContent = tr(isAdmin ? 'aLogout' : 'aLogin');
+}
+$('adminLogin').onclick = async () => {
+  const fa = window.__fbAuth; if (!fa) return; click();
+  try { await (isAdmin ? fa.signOut() : fa.signIn()); } catch(e){ toast('⚠️', esc(tr('aLoginErr'))); }
+};
 function renderSettings(){
+  renderAdminLogin();
   $('setList').innerHTML = SETS.map(s => {
     const v = getSet(s.k), label = tr(s.l || 's_' + s.k);
     let ctl = '';
