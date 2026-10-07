@@ -775,9 +775,9 @@ he:{
   pickFull:'אפשר לקחת רק {n} כוחות', pickFullS:'תוריד כוח אחד (לחיצה עליו) ואז תבחר אחר', ninjaDash:'לנינג׳ה תמיד יש דאש',
   rotateT:'סובב את הטלפון על הצד, ככה הכי כיף לשחק!', close:'סגור',
   bonusB:'בונוס יומי', bonusReady:'מוכן! ⭐', bonusIn:'עוד {t}', bonusQ:'🎁 שלב בונוס יומי',
-  bonusD:'40 שניות של אסטרואידי זהב ותיבות אוצר! תפוצץ כמה שיותר כדי לאסוף מטבעות ויהלומים. אם נפגעים מאבדים 3 שניות, אבל לא נפסלים. אפשר פעם אחת ביום.',
+  bonusD:'40 שניות של אסטרואידי זהב ותיבות אוצר! תפוצץ כמה שיותר כדי לאסוף מטבעות ויהלומים. אם נפגעים מאבדים 3 שניות, אבל לא נפסלים. אפשר פעם אחת ביום, ומתאפס כל לילה בחצות.',
   bonusGo:'יאללה!', bonusWait:'כבר שיחקת בבונוס היום. הבונוס הבא בעוד {t}', bonusBanner:'שלב בונוס!', bonusSub:'תפוצץ את הזהב!',
-  bonusHit:'−3 שניות', bonusOver:'הבונוס חוזר בעוד 24 שעות', bonusEnd:'הבונוס נגמר!',
+  bonusHit:'−3 שניות', bonusOver:'הבונוס חוזר בחצות 🌙', bonusEnd:'הבונוס נגמר!',
   runB:'מרוץ ניאון', runQ:'🌀 מרוץ ניאון', runD:'משחק אחר לגמרי! טסים קדימה במנהרת ניאון, מתחמקים מקירות, לייזרים, מטאורים ומוקשים ואוספים כדורי אנרגיה ברצף בשביל קומבו. יש 7 כוחות, משטחי בוסט ויהלומים בתוך הפתחים. מתחילים לאט, וכל 120 מטר יש אזור חדש, מהיר וקשה יותר. כמה רחוק תגיע?',
   runKeys:'חצים ימינה ושמאלה כדי לזוז · למעלה לטורבו · למטה כדי להאט', runTouch:'תגרור את האצבע ימינה ושמאלה · ▲ לטורבו', runGo:'לטוס!',
   runSub:'תתחמק ותאסוף אנרגיה!', runZone:'אזור {n}', runFaster:'יותר מהר!', runNear:'כמעט! +{n}',
@@ -880,9 +880,9 @@ en:{
   pickFull:'You can only take {n} powers', pickFullS:'Tap a power to remove it, then pick another', ninjaDash:'The Ninja always has Dash',
   rotateT:'Turn your phone sideways, it\'s more fun that way!', close:'Close',
   bonusB:'Daily bonus', bonusReady:'Ready! ⭐', bonusIn:'in {t}', bonusQ:'🎁 Daily bonus level',
-  bonusD:'40 seconds of gold asteroids and treasure ships! Blast as many as you can for coins and diamonds. Getting hit costs 3 seconds, but you are never out. Once a day.',
+  bonusD:'40 seconds of gold asteroids and treasure ships! Blast as many as you can for coins and diamonds. Getting hit costs 3 seconds, but you are never out. Once a day, and it resets every night at midnight.',
   bonusGo:'Let\'s go!', bonusWait:'You already played today\'s bonus. Next bonus in {t}', bonusBanner:'Bonus level!', bonusSub:'Blast the gold!',
-  bonusHit:'−3 seconds', bonusOver:'The bonus is back in 24 hours', bonusEnd:'Bonus over!',
+  bonusHit:'−3 seconds', bonusOver:'The bonus is back at midnight 🌙', bonusEnd:'Bonus over!',
   runB:'Neon Rush', runQ:'🌀 Neon Rush', runD:'A totally different game! Fly forward through a neon tunnel, dodge walls, lasers, meteors and mines, and grab energy orbs in a row for combos. There are 7 power-ups, boost pads and diamonds hidden in the openings. It starts slow, and every 120 m is a new zone, faster and harder. How far can you go?',
   runKeys:'Left and right arrows to move · Up for turbo · Down to slow down', runTouch:'Drag your finger left and right · ▲ for turbo', runGo:'Fly!',
   runSub:'Dodge and grab energy!', runZone:'Zone {n}', runFaster:'Faster!', runNear:'Close call! +{n}',
@@ -3191,7 +3191,11 @@ $('rotateX').onclick = () => { click(); rotateClosed = true; checkRotate(); };
 // ---------- special modes on the home screen ----------
 let bonusT = 0;
 const DAY = 24 * 3600 * 1000;
-const bonusLeft = () => Math.max(0, Math.min(DAY, num(save.bonusAt) + DAY - Date.now()));
+// the daily bonus comes back every night at midnight (the player's own clock), not 24 hours after playing
+const bonusLeft = () => {
+  const now = new Date(), today = new Date(now).setHours(0, 0, 0, 0), next = new Date(now).setHours(24, 0, 0, 0);
+  return num(save.bonusAt) < today ? 0 : Math.max(0, Math.min(DAY, next - now));
+};
 const hms = ms => { const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, p = n => String(n).padStart(2, '0'); return h ? `${h}:${p(m)}:${p(x)}` : `${m}:${p(x)}`; };
 function renderModes(){
   const left = bonusLeft();
