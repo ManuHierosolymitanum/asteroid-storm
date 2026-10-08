@@ -960,6 +960,7 @@ const POW = {
   magnet:{c:'#b0ffea', icon:'U', n:['מגנט','Magnet'], dur:12},
   drone: {c:'#c38bff', icon:'◎', n:['רובוט עוזר','Helper drone'], dur:15},
   slow:  {c:'#7fb2ff', icon:'◷', n:['האטת זמן','Slow time'], dur:6},
+  star:  {c:'#ffd23f', icon:'★', n:['בלתי מנוצח','Invincible'], dur:6},
   life:  {c:'#ff5d73', icon:'♥', n:['לב נוסף','Extra heart']},
   bomb:  {c:'#c38bff', icon:'✹', n:['פצצה','Bomb']},
   freeze:{c:'#bfefff', icon:'❄', n:['הקפאה','Freeze'], dur:4, ability:true},
@@ -2448,6 +2449,7 @@ function respawnHere(inv){
 }
 function hitShip(){
   if (ship.inv > 0) return;
+  if (on('star')) return; // invincible: nothing can hurt you
   if (testGame && debug.god){ ship.inv = .6; ring(ship.x, ship.y, '#8dff9a', 50, 300); return; }
   if (on('shield')){
     timers.shield = 0; ship.inv = 1.2; ring(ship.x, ship.y, POW.shield.c, 90, 320);
@@ -2783,7 +2785,7 @@ function update(dt){
   if (ship.inv <= 0){
     for (const r of rocks){
       if (Math.hypot(ship.x-r.x, ship.y-r.y) < r.r + ship.r*.7){
-        if (on('shield')) { r.hp = 0; killRock(r); }
+        if (on('shield') || on('star')) { r.hp = 0; killRock(r); }
         hitShip(); if (state !== 'play') return;
         break;
       }
@@ -2998,6 +3000,16 @@ function drawShip(t){
   const [sc, sb] = shipLook(S);
   drawShipShape(ship.x, ship.y, ship.a, sc, sb, ship.thrust, SHIPS.indexOf(S));
   if (on('clone')){ ctx.globalAlpha = timers.clone < 2 && Math.floor(t/120)%2 ? .25 : .65; drawShipShape(W-ship.x, H-ship.y, ship.a+Math.PI, POW.clone.c, '#3d1435', ship.thrust, SHIPS.indexOf(S)); ctx.globalAlpha = 1; }
+  if (on('star')){
+    // rainbow aura while invincible; it blinks in the last 2 seconds
+    const fading = timers.star < 2 && Math.floor(t/120)%2;
+    if (!fading){
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 3; i++){ ctx.strokeStyle = `hsl(${(t/4 + i*120) % 360},100%,65%)`; ctx.globalAlpha = .85 - i*.2; ctx.beginPath(); ctx.arc(ship.x, ship.y, 22 + i*6 + Math.sin(t/90 + i)*2, 0, TAU); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    }
+    if (Math.random() < .5) parts.push({x:ship.x + rnd(-14,14), y:ship.y + rnd(-14,14), vx:rnd(-40,40), vy:rnd(-40,40), life:.4, color:`hsl(${Math.random()*360},100%,70%)`, size:3});
+  }
   if (on('shield')){
     const pulse = 1 + Math.sin(t/120)*.06, fading = timers.shield < 2 && Math.floor(t/120)%2;
     if (!fading){ ctx.strokeStyle = POW.shield.c; ctx.globalAlpha = .8; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ship.x, ship.y, 26*pulse, 0, TAU); ctx.stroke(); ctx.globalAlpha = .12; ctx.fillStyle = POW.shield.c; ctx.fill(); ctx.globalAlpha = 1; }
