@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1b33">
+<meta name="description" content="מוצאים מניין קרוב: שחרית, מנחה וערבית. רואים כמה אנשים יש, כמה זמן הליכה ומתי מתחילים.">
+<title>מניין עכשיו</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="leaflet.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div class="brand"><span class="logo">🕍</span><div><b>מניין עכשיו</b><small id="zline">טוען זמנים…</small></div></div>
+    <button class="iconbtn" id="btnInstall" hidden title="התקנה">⬇️</button>
+  </header>
+  <div id="banner" class="banner" hidden></div>
+
+  <nav class="seg" id="typeSeg">
+    <button data-t="shacharit">🌅 שחרית</button>
+    <button data-t="mincha">☀️ מנחה</button>
+    <button data-t="arvit">🌙 ערבית</button>
+  </nav>
+
+  <main>
+    <section id="v-list" class="view active">
+      <div class="chips" id="filterChips">
+        <button data-f="all" class="on">הכל</button>
+        <button data-f="full">✅ יש כבר מניין</button>
+        <button data-f="near">🚶 עד 10 דק'</button>
+        <button data-f="soon">⏱️ מתחילים בקרוב</button>
+      </div>
+      <div id="list"></div>
+    </section>
+
+    <section id="v-map" class="view">
+      <div id="bigmap" dir="ltr"></div>
+      <button class="fab-small" id="btnHereIsMe" hidden>📍 אני נמצא כאן (במרכז המפה)</button>
+    </section>
+
+    <section id="v-zmanim" class="view"><div id="zmanim"></div></section>
+    <section id="v-settings" class="view"><div id="settings"></div></section>
+  </main>
+
+  <div id="mybar" hidden></div>
+  <button id="fabCreate" class="fab">➕ פתח מניין</button>
+
+  <nav id="bottom">
+    <button data-v="list" class="on"><span>🔍</span>מניינים</button>
+    <button data-v="map"><span>🗺️</span>מפה</button>
+    <button data-v="zmanim"><span>🕰️</span>זמנים</button>
+    <button data-v="settings"><span>⚙️</span>הגדרות</button>
+  </nav>
+</div>
+
+<!-- full screen pages -->
+<div id="room" class="page" hidden></div>
+<div id="create" class="page" hidden></div>
+<div id="modal" class="modal" hidden><div class="box" id="modalBox"></div></div>
+<div id="toasts"></div>
+
+<script src="leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
