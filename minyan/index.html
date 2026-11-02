@@ -3,45 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f1b33">
-<meta name="description" content="מוצאים מניין קרוב: שחרית, מנחה וערבית. רואים כמה אנשים יש, כמה זמן הליכה ומתי מתחילים.">
-<title>מניין עכשיו</title>
+<meta name="theme-color" content="#0b1a36">
+<title>מוצא המניין: למצוא מניין קרוב לשחרית, מנחה וערבית</title>
+<meta name="description" content="מוצא המניין: אפליקציה חינמית למציאת מניין קרוב. רואים בזמן אמת כמה אנשים יש בכל מניין, כמה דקות הליכה ומתי מתחילים. זמני תפילה קבועים של בתי כנסת, זמני היום, מפה וניווט.">
+<meta name="keywords" content="מוצא המניין, מניין, מניין קרוב, למצוא מניין, מנחה, ערבית, שחרית, בית כנסת, זמני תפילה, זמני היום, minyan finder, find a minyan">
+<meta name="application-name" content="מוצא המניין">
+<meta name="apple-mobile-web-app-title" content="מוצא המניין">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta property="og:type" content="website">
+<meta property="og:title" content="מוצא המניין">
+<meta property="og:description" content="מוצאים מניין קרוב: שחרית, מנחה וערבית. כמה אנשים יש, כמה דקות הליכה, ומתי מתחילים.">
+<meta property="og:image" content="icon-512.png">
+<meta property="og:locale" content="he_IL">
+<link rel="canonical" href="https://motze-haminyan.github.io/">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="leaflet.css">
 <link rel="stylesheet" href="app.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"מוצא המניין","alternateName":["Motze HaMinyan","Minyan Finder"],"applicationCategory":"LifestyleApplication","operatingSystem":"Android, iOS, Windows, macOS","inLanguage":"he","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"ILS"},"description":"אפליקציה חינמית למציאת מניין קרוב: שחרית, מנחה וערבית, עם זמני בתי כנסת, זמני היום, מפה וניווט."}
+</script>
 </head>
 <body>
+<noscript>
+  <h1>מוצא המניין</h1>
+  <p>אפליקציה חינמית למציאת מניין קרוב לשחרית, מנחה וערבית. רואים כמה אנשים יש בכל מניין, כמה דקות הליכה ומתי מתחילים. בתי כנסת יכולים לפרסם זמני תפילה קבועים. כדי להשתמש באפליקציה צריך להפעיל JavaScript.</p>
+</noscript>
 <div id="app">
   <header id="top">
-    <div class="brand"><span class="logo">🕍</span><div><b>מניין עכשיו</b><small id="zline">טוען זמנים…</small></div></div>
-    <button class="iconbtn" id="btnInstall" hidden title="התקנה">⬇️</button>
+    <div class="brand">
+      <img src="icon-192.png" alt="" class="logo">
+      <div><h1>מוצא המניין</h1><small id="hdate"></small></div>
+    </div>
+    <div class="topr">
+      <div class="clock" id="clock" title="השעה במקום שנבחר">--:--</div>
+      <button class="placechip" id="placeChip">📍 <span id="placeName">המיקום שלי</span></button>
+    </div>
   </header>
-  <div id="banner" class="banner" hidden></div>
-
-  <nav class="seg" id="typeSeg">
-    <button data-t="shacharit">🌅 שחרית</button>
-    <button data-t="mincha">☀️ מנחה</button>
-    <button data-t="arvit">🌙 ערבית</button>
-  </nav>
+  <div id="banners"></div>
 
   <main>
-    <section id="v-list" class="view active">
-      <div class="chips" id="filterChips">
-        <button data-f="all" class="on">הכל</button>
-        <button data-f="full">✅ יש כבר מניין</button>
-        <button data-f="near">🚶 עד 10 דק'</button>
-        <button data-f="soon">⏱️ מתחילים בקרוב</button>
-      </div>
+    <section id="v-search" class="view active">
+      <div class="panel" id="searchPanel"></div>
+      <div class="reshead" id="resHead"></div>
       <div id="list"></div>
     </section>
-
     <section id="v-map" class="view">
+      <div class="panel slim" id="mapPanel"></div>
       <div id="bigmap" dir="ltr"></div>
-      <button class="fab-small" id="btnHereIsMe" hidden>📍 אני נמצא כאן (במרכז המפה)</button>
     </section>
-
+    <section id="v-mine" class="view"><div id="mine"></div></section>
     <section id="v-zmanim" class="view"><div id="zmanim"></div></section>
     <section id="v-settings" class="view"><div id="settings"></div></section>
   </main>
@@ -50,16 +63,17 @@
   <button id="fabCreate" class="fab">➕ פתח מניין</button>
 
   <nav id="bottom">
-    <button data-v="list" class="on"><span>🔍</span>מניינים</button>
+    <button data-v="search" class="on"><span>🔍</span>חיפוש</button>
     <button data-v="map"><span>🗺️</span>מפה</button>
+    <button data-v="mine"><span>⭐</span>שלי</button>
     <button data-v="zmanim"><span>🕰️</span>זמנים</button>
     <button data-v="settings"><span>⚙️</span>הגדרות</button>
   </nav>
 </div>
 
-<!-- full screen pages -->
 <div id="room" class="page" hidden></div>
-<div id="create" class="page" hidden></div>
+<div id="editor" class="page" hidden></div>
+<div id="nav" class="page navpage" hidden></div>
 <div id="modal" class="modal" hidden><div class="box" id="modalBox"></div></div>
 <div id="toasts"></div>
 
